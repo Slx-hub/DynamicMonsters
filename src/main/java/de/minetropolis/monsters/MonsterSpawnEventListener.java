@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package de.minetropolis.monsters;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
@@ -29,20 +29,20 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 /**
  *
  */
-public class MonsterSpawnEventListener implements Listener {
+public final class MonsterSpawnEventListener implements Listener {
 
 	private final Map<EntityType, Consumer<Entity>> modifications;
-	
-	public MonsterSpawnEventListener (Map<EntityType, Consumer<Entity>> modifications) {
+
+	public MonsterSpawnEventListener (final Map<EntityType, Consumer<Entity>> modifications) {
 		this.modifications = new HashMap<>(modifications);
 		this.modifications.forEach((type, mod) -> this.modifications.remove(type, null));
 	}
-	
+
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-	public void onMonsterSpawn(CreatureSpawnEvent spanwEvent) {
-		EntityType type = spanwEvent.getEntityType();
-		if (modifications.containsKey(type) && modifications.get(type) != null) {
-			modifications.get(type).accept(spanwEvent.getEntity());
+	public void onMonsterSpawn (final CreatureSpawnEvent spanwEvent) {
+		final EntityType type = spanwEvent.getEntityType();
+		if (this.modifications.containsKey(type) && this.modifications.get(type) != null) {
+			this.modifications.get(type).accept(spanwEvent.getEntity());
 		}
 	}
 }

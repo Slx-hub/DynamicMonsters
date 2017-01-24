@@ -14,28 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.minetropolis.monsters;
-
-import java.util.function.BiFunction;
 
 /**
- *
+ * 
  */
-public enum DistanceMethod {
-	PYTHAGORAS((x, z) -> Math.sqrt(x * x + z * z)),
-	MINECRAFT((x, z) -> Math.max(Math.abs(x), Math.abs(z)));
-
-	private final BiFunction<Double, Double, Double> distanceCalculation;
-
-	DistanceMethod (BiFunction<Double, Double, Double> distanceCalculation) {
-		this.distanceCalculation = distanceCalculation;
-	}
-
-	public double distanceOf (double deltaX, double deltaZ) {
-		return this.distanceCalculation.apply(deltaX, deltaZ);
-	}
-
-	public double distanceOf (double fromX, double fromZ, double toX, double toZ) {
-		return distanceOf(toX - fromX, toZ - fromZ);
-	}
-}
+package de.minetropolis.monsters;

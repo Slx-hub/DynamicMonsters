@@ -16,8 +16,10 @@
  */
 package de.minetropolis.monsters;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
@@ -31,26 +33,29 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  *
  */
-public class DynamicMonstersPlugin extends JavaPlugin {
+public final class DynamicMonstersPlugin extends JavaPlugin {
+
+	public DynamicMonstersPlugin () {
+	}
 
 	@Override
 	public void onEnable () {
 		this.saveDefaultConfig();
-		Set<String> configKeys = this.getConfig().getKeys(true);
+		final Set<String> configKeys = this.getConfig().getKeys(true);
 		this.getLogger().config("Dumping config keys:");
 		configKeys.forEach(key -> this.getLogger().config(key));
 
 		new ConfigurationParser(this).parseCurrentConfig();
-		
-		Map<EntityType, Consumer<Entity>> modifications = new HashMap<>();
+
+		final Map<EntityType, Consumer<Entity>> modifications = new HashMap<>();
 		modifications.put(EntityType.ZOMBIE, this::modifyMonster);
 		getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(modifications), this);
-		getCommand("dynamicmonster").setExecutor((this::dynamicMonsterCommand));
+		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 
 	public void modifyMonster (Entity entity) {
-		double distance = entity.getWorld().getSpawnLocation().distanceSquared(entity.getLocation());
-		long protoLevel = Math.round(Math.sqrt(distance));
+		final double distance = entity.getWorld().getSpawnLocation().distanceSquared(entity.getLocation());
+		final long protoLevel = Math.round(Math.sqrt(distance));
 		final int level;
 		if (protoLevel > Integer.MAX_VALUE) {
 			level = Integer.MAX_VALUE;
@@ -59,11 +64,12 @@ public class DynamicMonstersPlugin extends JavaPlugin {
 		}
 		entity.setCustomName(entity.getName() + " Lvl " + level);
 		if (entity instanceof LivingEntity) {
-			LivingEntity livingEntity = (LivingEntity) entity;
-			AttributeModifier modifier = new AttributeModifier("dynamicMonsterModifier", Math.sqrt(level), AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-			AttributeInstance maxHealth = livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-			AttributeInstance attackDamage = livingEntity.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-			AttributeInstance movementSpeed = livingEntity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
+			final LivingEntity livingEntity = (LivingEntity) entity;
+			final AttributeModifier modifier = new AttributeModifier("dynamicMonsterModifier", Math.sqrt(level),
+																	 AttributeModifier.Operation.MULTIPLY_SCALAR_1);
+			final AttributeInstance maxHealth = livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+			final AttributeInstance attackDamage = livingEntity.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+			final AttributeInstance movementSpeed = livingEntity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
 			if (maxHealth != null) {
 				maxHealth.setBaseValue(19 + level);
 				livingEntity.setHealth(maxHealth.getValue());
@@ -77,7 +83,8 @@ public class DynamicMonstersPlugin extends JavaPlugin {
 		}
 	}
 
-	public boolean dynamicMonsterCommand (CommandSender sender, Command command, String label, String[] args) {
+	public boolean dynamicMonsterCommand (final CommandSender sender, final Command command,
+										  final String label, final String[] args) {
 		return true;
 	}
 

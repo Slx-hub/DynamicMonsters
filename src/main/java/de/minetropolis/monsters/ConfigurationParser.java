@@ -16,9 +16,14 @@
  */
 package de.minetropolis.monsters;
 
-import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.function.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.bukkit.Location;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -30,7 +35,7 @@ import org.bukkit.plugin.Plugin;
 /**
  *
  */
-public class ConfigurationParser {
+public final class ConfigurationParser {
 
 	private final Plugin plugin;
 	private Configuration config;
@@ -50,18 +55,19 @@ public class ConfigurationParser {
 		if (!this.parsed.get()) {
 			throw new IllegalStateException("not parsed");
 		}
-		return Collections.unmodifiableMap(entityModifications);
+		return Collections.unmodifiableMap(this.entityModifications);
 	}
 
 	public void parseCurrentConfig () {
-		parsed.set(false);
+		this.parsed.set(false);
 		cleanUpOldParse();
 		loadConfiguration();
 		try {
 			parseConfig();
-			parsed.set(true);
+			this.parsed.set(true);
 		} catch (InvalidConfigurationException exception) {
-			plugin.getLogger().log(java.util.logging.Level.SEVERE, "Invalid configuration: {0}", exception.getMessage());
+			this.plugin.getLogger()
+					.log(java.util.logging.Level.SEVERE, "Invalid configuration: {0}", exception.getMessage());
 		}
 
 	}
@@ -71,69 +77,84 @@ public class ConfigurationParser {
 	}
 
 	private void loadConfiguration () {
-		plugin.saveDefaultConfig();
-		plugin.reloadConfig();
-		this.config = plugin.getConfig();
+		this.plugin.saveDefaultConfig();
+		this.plugin.reloadConfig();
+		this.config = this.plugin.getConfig();
 	}
 
 	private void parseConfig () throws InvalidConfigurationException {
-		Map<String, Function<Location, Integer>> worldsLevelMethods = loadWorlds();
+		final Map<String, Function<Location, Integer>> worldsLevelMethods = loadWorlds();
 	}
 
 	private Map<String, Function<Location, Integer>> loadWorlds () throws InvalidConfigurationException {
-		ConfigurationSection worldsSection = config.getConfigurationSection("worlds");
+		final ConfigurationSection worldsSection = this.config.getConfigurationSection("worlds");
 		if (worldsSection == null || worldsSection.getKeys(false).isEmpty()) {
 			throw new InvalidConfigurationException("worlds are not defined");
 		}
-		Set<String> worldNames = worldsSection.getKeys(false);
-		Map<String, Function<Location, Integer>> worlds = new HashMap<>();
+		final Set<String> worldNames = worldsSection.getKeys(false);
+		final Map<String, Function<Location, Integer>> worlds = new HashMap<>();
 		for (String worldName : worldNames) {
-			ConfigurationSection worldSection = worldsSection.getConfigurationSection(worldName);
+			final ConfigurationSection worldSection = worldsSection.getConfigurationSection(worldName);
 			worlds.put(worldName, loadWorld(worldName, worldSection));
 		}
 		return worlds;
 	}
 
-	private Function<Location, Integer> loadWorld (String worldName, ConfigurationSection worldSection) throws InvalidConfigurationException {
-		if (worldSection == null || !worldSection.isDouble("x") || !worldSection.isDouble("y") || !worldSection.isDouble("z")) {
+	private Function<Location, Integer> loadWorld (final String worldName, final ConfigurationSection worldSection)
+			throws InvalidConfigurationException {
+		if (worldSection == null
+				|| !worldSection.isDouble("x") || !worldSection.isDouble("y") || !worldSection.isDouble("z")) {
 			throw new InvalidConfigurationException("center of world " + worldName + " is not defined");
 		}
-		BiFunction<Double, Double, Integer> horizontalLevel
-				= loadHorizontalLevelMethod(worldSection, worldName, worldSection.getDouble("x"), worldSection.getDouble("z"));
-		Function<Double, Integer> verticalLevel
-				= loadVerticalLevelMethod(worldSection, worldName, worldSection.getDouble("y"));
+		final double x = worldSection.getDouble("x");
+		final double y = worldSection.getDouble("y");
+		final double z = worldSection.getDouble("z");
+		final BiFunction<Double, Double, Integer> horizontalLevel
+				= loadHorizontalLevelMethod(worldSection, worldName, x, z);
+		final Function<Double, Integer> verticalLevel = loadVerticalLevelMethod(worldSection, worldName, y);
 		return loc -> 1 + horizontalLevel.apply(loc.getX(), loc.getZ()) + verticalLevel.apply(loc.getY());
 	}
 
-	private BiFunction<Double, Double, Integer> loadHorizontalLevelMethod (ConfigurationSection worldSection, String worldName, double centerX, double centerZ) throws InvalidConfigurationException {
+	private BiFunction<Double, Double, Integer> loadHorizontalLevelMethod (final ConfigurationSection worldSection,
+																		   final String worldName,
+																		   final double centerX, final double centerZ)
+			throws InvalidConfigurationException {
 		if (worldSection.contains("horizontal", true)) {
 			if (!worldSection.isDouble("horizontal")) {
-				throw new InvalidConfigurationException("horizontal level increase of world " + worldName + " is not valid");
+				throw new InvalidConfigurationException("horizontal level increase of world " + worldName
+						+ " is not valid");
 			}
-			double horizontal = worldSection.getDouble("horizontal");
+			final double horizontal = worldSection.getDouble("horizontal");
 			if (horizontal < +0.0) {
-				throw new InvalidConfigurationException("horizontal level-increase per meter of world " + worldName + " may not be negative");
+				throw new InvalidConfigurationException("horizontal level-increase per meter of world " + worldName
+						+ " may not be negative");
 			}
 			if (horizontal > +0.0) {
 				try {
-					DistanceMethod distanceMethod = DistanceMethod.valueOf(worldSection.getString("distance-method", "MINECRAFT"));
+					final String rawMethod = worldSection.getString("distance-method", "MINECRAFT");
+					final DistanceMethod distanceMethod = DistanceMethod.valueOf(rawMethod);
 					return (x, z) -> floorInteger(distanceMethod.distanceOf(centerX, centerZ, x, z) * horizontal);
 				} catch (IllegalArgumentException exception) {
-					throw new InvalidConfigurationException("distance-method of world " + worldName + " is not valid", exception);
+					throw new InvalidConfigurationException("distance-method of world " + worldName + " is not valid",
+															exception);
 				}
 			}
 		}
 		return (x, z) -> 0;
 	}
 
-	private Function<Double, Integer> loadVerticalLevelMethod (ConfigurationSection worldSection, String worldName, double centerY) throws InvalidConfigurationException {
+	private Function<Double, Integer> loadVerticalLevelMethod (final ConfigurationSection worldSection,
+															   final String worldName, double centerY)
+			throws InvalidConfigurationException {
 		if (worldSection.contains("vertical", true)) {
 			if (!worldSection.isDouble("vertical")) {
-				throw new InvalidConfigurationException("vertical level increase of world " + worldName + " is not valid");
+				throw new InvalidConfigurationException("vertical level increase of world " + worldName
+						+ " is not valid");
 			}
-			double vertical = worldSection.getDouble("vertical");
+			final double vertical = worldSection.getDouble("vertical");
 			if (vertical < +0.0) {
-				throw new InvalidConfigurationException("vertical level-increase per meter of world " + worldName + " may not be negative");
+				throw new InvalidConfigurationException("vertical level-increase per meter of world " + worldName
+						+ " may not be negative");
 			}
 			if (vertical > +0.0) {
 				if (worldSection.getBoolean("upwards-increase", false)) {
@@ -147,7 +168,7 @@ public class ConfigurationParser {
 	}
 
 	public static int floorInteger (double value) {
-		long exact = Math.round(Math.floor(value));
+		final long exact = Math.round(Math.floor(value));
 		if (exact > Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;
 		} else if (exact < Integer.MIN_VALUE) {
