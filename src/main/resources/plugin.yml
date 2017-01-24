@@ -1,0 +1,14 @@
+name: "${artifactId}"
+version: ${version}
+main: ${basePackage}.${mainClass}
+
+description: "${project.description}"
+author: 'seyfahni'
+website: "${project.url}"
+
+commands:
+  dynamicmonster:
+    description: 'DynamicMonsterDifficulity command.'
+    usage: /<command>
+    permission: dmd.command
+    aliases: [dmd, dynamicmonsterdifficulity]
