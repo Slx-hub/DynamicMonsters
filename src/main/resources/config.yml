@@ -1,13 +1,12 @@
-centers:
+worlds:
   my_world:
     x: 123
     y: 62
     z: -672
-horizontal:
-  level-per-meter: 0.0125
-vertical:
-  only-down: true # being higher as center-y doesn't increase level
-  level-per-meter: 0.2
+    horizontal: 0.0125
+    distance-method: PYTHAGORAS # distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
+    vertical: 0.2
+    upwards-increase: false # being higher as center doesn't increase level
 entities:
   ZOMBIE:
     default:

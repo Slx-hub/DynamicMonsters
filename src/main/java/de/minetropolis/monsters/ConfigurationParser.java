@@ -79,27 +79,87 @@ public class ConfigurationParser {
 	}
 
 	private void parseConfig () throws InvalidConfigurationException {
-		Map<String, Location> centers = loadCenters();
+		Map<String, Function<Location, Integer>> worldsLevelMethods = loadWorlds();
 	}
 
-	private Map<String, Location> loadCenters () throws InvalidConfigurationException {
-		ConfigurationSection centersSection = config.getConfigurationSection("centers");
-		if (centersSection == null || centersSection.getKeys(false).isEmpty()) {
-			throw new InvalidConfigurationException("centers are not defined");
+	private Map<String, Function<Location, Integer>> loadWorlds () throws InvalidConfigurationException {
+		ConfigurationSection worldsSection = config.getConfigurationSection("worlds");
+		if (worldsSection == null || worldsSection.getKeys(false).isEmpty()) {
+			throw new InvalidConfigurationException("worlds are not defined");
 		}
-		Set<String> worlds = centersSection.getKeys(false);
-		Map<String, Location> centers = new HashMap<>();
-		for (String worldName : worlds) {
-			World world = plugin.getServer().getWorld(worldName);
-			if (world == null) {
-				throw new InvalidConfigurationException("world " + worldName + " does not exist");
-			}
-			ConfigurationSection worldSection = centersSection.getConfigurationSection(worldName);
-			if (worldSection == null || !worldSection.isDouble("x") || !worldSection.isDouble("y") || !worldSection.isDouble("z")) {
-				throw new InvalidConfigurationException("center of world " + worldName + " is not defined");
-			}
-			centers.put(worldName, new Location(world, worldSection.getDouble("x"), worldSection.getDouble("y"), worldSection.getDouble("z")));
+		Set<String> worldNames = worldsSection.getKeys(false);
+		Map<String, Function<Location, Integer>> worlds = new HashMap<>();
+		for (String worldName : worldNames) {
+			ConfigurationSection worldSection = worldsSection.getConfigurationSection(worldName);
+			worlds.put(worldName, loadWorld(worldName, worldSection));
 		}
-		return centers;
+		return worlds;
+	}
+
+	private Function<Location, Integer> loadWorld (String worldName, ConfigurationSection worldSection) throws InvalidConfigurationException {
+		World world = plugin.getServer().getWorld(worldName);
+		if (world == null) {
+			throw new InvalidConfigurationException("world " + worldName + " does not exist");
+		}
+		if (worldSection == null || !worldSection.isDouble("x") || !worldSection.isDouble("y") || !worldSection.isDouble("z")) {
+			throw new InvalidConfigurationException("center of world " + worldName + " is not defined");
+		}
+		Location location = new Location(world, worldSection.getDouble("x"), worldSection.getDouble("y"), worldSection.getDouble("z"));
+		BiFunction<Double, Double, Integer> horizontalLevel = loadHorizontalLevelMethod(worldSection, worldName, location);
+		Function<Double, Integer>			verticalLevel   = loadVerticalLevelMethod  (worldSection, worldName, location);
+		return loc -> 1 + horizontalLevel.apply(loc.getX(), loc.getZ()) + verticalLevel.apply(loc.getY());
+	}
+
+	private BiFunction<Double, Double, Integer> loadHorizontalLevelMethod (ConfigurationSection worldSection, String worldName, Location location) throws InvalidConfigurationException {
+		if (worldSection.contains("horizontal", true)) {
+			if (!worldSection.isDouble("horizontal")) {
+				throw new InvalidConfigurationException("horizontal level increase of world " + worldName + " is not valid");
+			}
+			double horizontal = worldSection.getDouble("horizontal");
+			if (horizontal < +0.0) {
+				throw new InvalidConfigurationException("horizontal level-increase per meter of world " + worldName + " may not be negative");
+			}
+			if (horizontal > +0.0) {
+				try {
+					DistanceMethod distanceMethod = DistanceMethod.valueOf(worldSection.getString("distance-method", "MINECRAFT"));
+					return (x, z) -> floorInteger(distanceMethod.distanceOf(location.getX(), location.getZ(), x, z) * horizontal);
+				} catch (IllegalArgumentException exception) {
+					throw new InvalidConfigurationException("distance-method of world " + worldName + " is not valid", exception);
+				}
+			}
+		}
+		return (x, z) -> 0;
+	}
+
+	private Function<Double, Integer> loadVerticalLevelMethod (ConfigurationSection worldSection, String worldName, Location location) throws InvalidConfigurationException {
+		final Function<Double, Integer> verticalLevel;
+		if (worldSection.contains("vertical", true)) {
+			if (!worldSection.isDouble("vertical")) {
+				throw new InvalidConfigurationException("vertical level increase of world " + worldName + " is not valid");
+			}
+			double vertical = worldSection.getDouble("vertical");
+			if (vertical < +0.0) {
+				throw new InvalidConfigurationException("vertical level-increase per meter of world " + worldName + " may not be negative");
+			}
+			if (vertical > +0.0) {
+				if (worldSection.getBoolean("upwards-increase", false)) {
+					return y -> floorInteger(Math.abs(location.getY() - y) * vertical);
+				} else {
+					return y -> floorInteger(Math.max(location.getY() - y, +0.0));
+				}
+			}
+		}
+		return y -> 0;
+	}
+
+	public static int floorInteger(double value) {
+		long exact = Math.round(Math.floor(value));
+		if (exact > Integer.MAX_VALUE) {
+			return Integer.MAX_VALUE;
+		} else if (exact < Integer.MIN_VALUE) {
+			return Integer.MIN_VALUE;
+		} else {
+			return (int) exact;
+		}
 	}
 }
