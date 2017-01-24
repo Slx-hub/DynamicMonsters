@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import java.util.logging.*;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -76,11 +78,28 @@ public class ConfigurationParser {
 		this.config = plugin.getConfig();
 	}
 
-	private boolean isValidEntityTypeSection (String entity) {
-		return true;
+	private void parseConfig () throws InvalidConfigurationException {
+		Map<String, Location> centers = loadCenters();
 	}
 
-	private void parseConfig () throws InvalidConfigurationException {
-		throw new InvalidConfigurationException("centers has no words defined");
+	private Map<String, Location> loadCenters () throws InvalidConfigurationException {
+		ConfigurationSection centersSection = config.getConfigurationSection("centers");
+		if (centersSection == null || centersSection.getKeys(false).isEmpty()) {
+			throw new InvalidConfigurationException("centers are not defined");
+		}
+		Set<String> worlds = centersSection.getKeys(false);
+		Map<String, Location> centers = new HashMap<>();
+		for (String worldName : worlds) {
+			World world = plugin.getServer().getWorld(worldName);
+			if (world == null) {
+				throw new InvalidConfigurationException("world " + worldName + " does not exist");
+			}
+			ConfigurationSection worldSection = centersSection.getConfigurationSection(worldName);
+			if (worldSection == null || !worldSection.isDouble("x") || !worldSection.isDouble("y") || !worldSection.isDouble("z")) {
+				throw new InvalidConfigurationException("center of world " + worldName + " is not defined");
+			}
+			centers.put(worldName, new Location(world, worldSection.getDouble("x"), worldSection.getDouble("y"), worldSection.getDouble("z")));
+		}
+		return centers;
 	}
 }
