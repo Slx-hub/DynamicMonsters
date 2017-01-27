@@ -1,74 +1,114 @@
 worlds:
-  my_world:
-    x: 123
-    y: 62
-    z: -672
+  # world name
+  world:
+    x: 123.0
+    y: 62.0
+    z: -672.0
     horizontal: 0.0125
-    distance-method: PYTHAGORAS # distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
+    # distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
+    distance-method: PYTHAGORAS
     vertical: 0.2
-    upwards-increase: false # being higher as center doesn't increase level
+    # being higher as center doesn't increase level
+    upwards-increase: false
 entities:
   ZOMBIE:
     default:
+      default: true
       name:
-        show-name: true # show entities name e.g. zombie
-        show-level: true # show generated level
-        custom-name: 'Zombie' # override the entities default name
+        # show entities name e.g. "Zombie" over entity, death messages will still be modified
+        show-name: true
+        # show generated level
+        show-level: true
+        # override the entities default name
+        custom-name: 'Zombie'
       loot:
-        rotten-flesh:
-          # rarity not set, item will drop every time
-          type: ROTTEN_FLESH
-          data: 0
-          amount:
-            min: 0
-            add-min-per-level: 0.025 # min won't get bigger than max
-            max: 2
-            add-min-per-level: 0.02 # if min reaches max they won't swap
-          # name not set, using Minecraft default
-          # lore not set, setting no lore
-        zombie-feather:
-          since-level: 30 # starting level is 30, not 1
-          rarity:
-            base: 100 # probability is (1 / rarity)
-            per-level: -2
-            min: 50
-          type: FEATHER # good old times
-          data: 0
-          amount:
-            min: 1
-            max: 1
-          name: 'Zombies'' Feather'
-          lore:
-            - 'They love them!'
-      health:
-        base: 10
-        per-level: 1 # add per-level*level to base, using operation
-        # operation not set, using ADD_NUMBER
-        # max not set, max is Integer.MAX_VALUE
-      speed:
-        # base not set, using Minecraft default
-        per-level: 0.01 # may be omitted for setting base value for all values
-        operation: ADD_SCALAR # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
-        max: 1 # max of per-level*level
-      damage:
-        per-level: 0.01
-        operation: ADD_SCALAR # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
-        max: 1 # max of per-level*level
+        # override default item drops ; default: false
+        override: true
+        items:
+          rotten-flesh:
+            # probability not set, item will drop every time
+            type: ROTTEN_FLESH
+            data: 0
+            amount:
+              min: 0
+              # min won't get bigger than max
+              add-min-per-level: 0.025
+              max: 2
+              # if min reaches max they won't swap
+              add-max-per-level: 0.02
+              # at level 400 there will always drop 10, increasing 0.02 per level, minimum is bigger than maximum
+              # max items = max + level * add-max-per-level
+              # min items = minimum(min + level * add-min-per-level, max items)
+              # but don't use this setup, it leads to unexpected behaviour
+            # name not set, using Minecraft default
+            # lore not set, setting no lore
+          zombie-feather:
+            # starting level is 31, not 1
+            since-level: 31
+            probability:
+              # base = 0 would lead to no drops, but change-to in-levels still applies
+              base: 0.01
+              # in-levels is change-to linear reached
+              change-to: 0.02
+              # probability of level x: 0.01 + (0.02 - 0.01) * min(50, x)
+              in-levels: 50
+              # if continue == true: probability of level x: min(1, 0.01 + (0.02 - 0.01) * x)
+              continue: false
+              # combined with starting level:
+              # level 1-30 -> no feathers
+              # level 31+  -> 1% chance for feather drop, increasing
+              # level 81+  -> first level with 2% chance for feather drop, not increasing
+            # good old times
+            type: FEATHER
+            data: 0
+            # instead of setting amount: min: 1 max: 1
+            amount:
+              # amount doesn't increase per level
+              min: 1
+              max: 2
+            name: 'Zombies'' Feather'
+            lore:
+              - 'They love them!'
+      attributes:
+        GENERIC_MAX_HEALTH:
+          base: 10.0
+          # add per-level*level to base, using operation
+          per-level: 1.0
+          # operation not set, using ADD_NUMBER
+          # max not set, max is Integer.MAX_VALUE
+        GENERIC_MOVEMENT_SPEED:
+          # base not set, using Minecraft default
+          # per-level may be omitted for setting base value for all values
+          per-level: 0.01
+          # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
+          operation: ADD_SCALAR
+          # max of per-level*level
+          max: 1.0
+        GENERIC_ATTACK_DAMAGE:
+          per-level: 0.0153
+          # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
+          operation: ADD_SCALAR
+          # max of per-level*level
+          max: 1.0
     boss:
       name:
-        # custom-name not set, using name as defined for whole mob type
-        show-level: false # this is a boss but can we defeat it?
-        add-boss: true # add "Boss" before name to indicate special status
-      rarity: 1000 # probability is (1 / rarity) 0 means disabled
-      equip:
+        # show-name is not set, default is true
+        # custom-name not set, using entity's name
+        # this is a boss but can we defeat it?
+        show-level: false
+        # add "Boss" before name to indicate special status
+        # no space is insertet between prefix and name, you must set it manually
+        prefix: 'Boss '
+      # probability = 0 disables natural spawn, but commands can still use this variant
+      probability: 0.001
+      equippment:
         bobs-sword:
-          # equip-rarity not set, equip allways
-          drop-rarity: 1 # always drop equipped item, default is 0, meaning never
+          # equip-probability not set, equip allways
+          # always drop equipped item, default is 0, meaning never
+          drop-probability: 1
           type: IRON_SWORD
           data: 5
-          amount:
-            min: 1
-            max: 1
+          amount: 1
           name: 'Bob''s Magic Sword'
           lore:
             - 'He fought his whole live and'
@@ -76,13 +116,15 @@ entities:
           enchantments:
             SHARPNESS: 1
             LOOTING: 2
-      health:
-        base: 100
-        per-level: 10
-      speed:
-        base: 0.2 # bosses are slower than normal zombies
-      damage:
-        base: 16
-        per-level: 0.25
-        operation: ADD_SCALAR
-        max: 35
+      attributes:
+        GENERIC_MAX_HEALTH:
+          base: 100.0
+          per-level: 10.0
+        GENERIC_MOVEMENT_SPEED:
+          # bosses are slower than normal zombies
+          base: 0.2
+        GENERIC_ATTACK_DAMAGE:
+          base: 16.0
+          per-level: 0.25
+          operation: ADD_SCALAR
+          max: 35.0

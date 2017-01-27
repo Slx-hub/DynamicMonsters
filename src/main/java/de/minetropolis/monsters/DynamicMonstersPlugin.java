@@ -35,6 +35,9 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public final class DynamicMonstersPlugin extends JavaPlugin {
 
+	/**
+	 *
+	 */
 	public DynamicMonstersPlugin () {
 	}
 
@@ -45,44 +48,22 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		this.getLogger().config("Dumping config keys:");
 		configKeys.forEach(key -> this.getLogger().config(key));
 
-		new ConfigurationParser(this).parseCurrentConfig();
+		ConfigurationParser parser = new ConfigurationParser(this);
+		parser.parseCurrentConfig();
 
-		final Map<EntityType, Consumer<Entity>> modifications = new HashMap<>();
-		modifications.put(EntityType.ZOMBIE, this::modifyMonster);
+		final Map<EntityType, Consumer<LivingEntity>> modifications = parser.getSpawnRules();
 		getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(modifications), this);
 		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 
-	public void modifyMonster (Entity entity) {
-		final double distance = entity.getWorld().getSpawnLocation().distanceSquared(entity.getLocation());
-		final long protoLevel = Math.round(Math.sqrt(distance));
-		final int level;
-		if (protoLevel > Integer.MAX_VALUE) {
-			level = Integer.MAX_VALUE;
-		} else {
-			level = (int) protoLevel;
-		}
-		entity.setCustomName(entity.getName() + " Lvl " + level);
-		if (entity instanceof LivingEntity) {
-			final LivingEntity livingEntity = (LivingEntity) entity;
-			final AttributeModifier modifier = new AttributeModifier("dynamicMonsterModifier", Math.sqrt(level),
-																	 AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-			final AttributeInstance maxHealth = livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-			final AttributeInstance attackDamage = livingEntity.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-			final AttributeInstance movementSpeed = livingEntity.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-			if (maxHealth != null) {
-				maxHealth.setBaseValue(19 + level);
-				livingEntity.setHealth(maxHealth.getValue());
-			}
-			if (attackDamage != null) {
-				attackDamage.addModifier(modifier);
-			}
-			if (movementSpeed != null) {
-				movementSpeed.addModifier(modifier);
-			}
-		}
-	}
-
+	/**
+	 *
+	 * @param sender
+	 * @param command
+	 * @param label
+	 * @param args
+	 * @return
+	 */
 	public boolean dynamicMonsterCommand (final CommandSender sender, final Command command,
 										  final String label, final String[] args) {
 		return true;

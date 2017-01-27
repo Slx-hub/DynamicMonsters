@@ -19,8 +19,8 @@ package de.minetropolis.monsters;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -31,13 +31,21 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
  */
 public final class MonsterSpawnEventListener implements Listener {
 
-	private final Map<EntityType, Consumer<Entity>> modifications;
+	private final Map<EntityType, Consumer<LivingEntity>> modifications;
 
-	public MonsterSpawnEventListener (final Map<EntityType, Consumer<Entity>> modifications) {
+	/**
+	 *
+	 * @param modifications
+	 */
+	public MonsterSpawnEventListener (final Map<EntityType, Consumer<LivingEntity>> modifications) {
 		this.modifications = new HashMap<>(modifications);
 		this.modifications.forEach((type, mod) -> this.modifications.remove(type, null));
 	}
 
+	/**
+	 *
+	 * @param spanwEvent
+	 */
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onMonsterSpawn (final CreatureSpawnEvent spanwEvent) {
 		final EntityType type = spanwEvent.getEntityType();
