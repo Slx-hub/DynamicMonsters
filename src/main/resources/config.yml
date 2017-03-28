@@ -1,15 +1,32 @@
 worlds:
   # world name
   world:
-    x: 123.0
-    y: 62.0
-    z: -672.0
-    horizontal: 0.0125
-    # distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
-    distance-method: PYTHAGORAS
-    vertical: 0.2
-    # being higher as center doesn't increase level
-    upwards-increase: false
+    far-increase:
+      center:
+        x: 123.0
+        y: 62.0
+        z: -672.0
+      # level to start with
+      base-level: 0
+      horizontal:
+        level-change: 1
+        # add all 80 meters level-change
+        distance-per-level: 80.0
+        distance-offset: 40.0
+        # PYTHAGORAS distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
+        distance-method: PYTHAGORAS
+        min-level: 0
+        max-level: 100
+      vertical:
+        level-change: 1
+        distance-per-level: 5
+        # being higher as center doesn't increase level
+        increase:
+          upwards: false
+          downwards: true
+    dungeon-hotspot:
+      center:
+        x: 0
 entities:
   ZOMBIE:
     default:
@@ -101,14 +118,15 @@ entities:
         prefix: 'Boss '
       # probability = 0 disables natural spawn, but commands can still use this variant
       probability: 0.001
-      equippment:
+      equipment:
         bobs-sword:
+          slot: HAND
           # equip-probability not set, equip allways
-          # always drop equipped item, default is 0, meaning never
+          # always drop equiped item, default is 0, meaning never
           drop-probability: 1
           type: IRON_SWORD
           data: 5
-          amount: 1
+          # amount will always equal 1 so setting it is redundant
           name: 'Bob''s Magic Sword'
           lore:
             - 'He fought his whole live and'

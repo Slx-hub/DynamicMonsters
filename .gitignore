@@ -133,6 +133,9 @@ Session.vim
 ### Do not push log files
 *.log
 
+### Do not push file locks
+.~lock.*
+
 ### Do not push archives
 *.7z
 *.dmg
@@ -142,3 +145,4 @@ Session.vim
 *.tar
 *.zip
 
+/nbproject/

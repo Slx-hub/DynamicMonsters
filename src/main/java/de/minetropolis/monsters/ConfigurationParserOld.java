@@ -16,6 +16,8 @@
  */
 package de.minetropolis.monsters;
 
+import de.minetropolis.monsters.configuration.ConfigurationUtil;
+import de.minetropolis.monsters.configuration.InvalidConfigurationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,25 +33,26 @@ import java.util.function.DoubleToIntFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
+import java.util.function.Supplier;
 import java.util.function.ToIntBiFunction;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 /**
  *
  */
-public final class ConfigurationParser {
+public final class ConfigurationParserOld {
 
 	private final Plugin plugin;
 	private Configuration config;
@@ -61,7 +64,7 @@ public final class ConfigurationParser {
 	 *
 	 * @param plugin
 	 */
-	public ConfigurationParser (Plugin plugin) {
+	public ConfigurationParserOld (Plugin plugin) {
 		this.plugin = plugin;
 	}
 
@@ -291,18 +294,16 @@ public final class ConfigurationParser {
 	}
 
 	private ObjIntConsumer<LivingEntity> getAttributes (final ConfigurationSection variantSection, final String entityType) throws InvalidConfigurationException {
-		final ObjIntConsumer<LivingEntity> attributes;
 		if (variantSection.contains("attributes", true)) {
 			ConfigurationSection attributesSection = variantSection.getConfigurationSection("attributes");
 			if (attributesSection == null) {
 				throw new InvalidConfigurationException("attributes configuration of variant" + variantSection.getName() + " of entity " + entityType + " is invalid");
 			}
-			attributes = loadAttributes(attributesSection);
+			return loadAttributes(attributesSection);
 		} else {
-			attributes = (entity, level) -> {
+			return (entity, level) -> {
 			};
 		}
-		return attributes;
 	}
 
 	private ObjIntConsumer<LivingEntity> loadAttributes (final ConfigurationSection attributesSection) throws InvalidConfigurationException {
@@ -385,19 +386,16 @@ public final class ConfigurationParser {
 	}
 	
 	private ObjIntConsumer<LivingEntity> getLoot (final ConfigurationSection variantSection, final String entityType) throws InvalidConfigurationException {
-		final ObjIntConsumer<LivingEntity> loot;
 		if (variantSection.contains("loot", true)) {
 			ConfigurationSection lootSection = variantSection.getConfigurationSection("loot");
 			if (lootSection == null) {
 				throw new InvalidConfigurationException("loot configuration of variant" + variantSection.getName() + " of entity " + entityType + " is invalid");
 			}
-			loot = (entity, level) -> {
-			};//loadLoot(lootSection);
+			return loadLoot(lootSection);
 		} else {
-			loot = (entity, level) -> {
+			return (entity, level) -> {
 			};
 		}
-		return loot;
 	}
 
 	private ObjIntConsumer<LivingEntity> loadLoot (final ConfigurationSection lootSection) throws InvalidConfigurationException {
@@ -405,33 +403,48 @@ public final class ConfigurationParser {
 		Optional<ConfigurationSection> optionalItemsSection = ConfigurationUtil.loadOptionalConfigurationSection(lootSection, "items");
 		if (optionalItemsSection.isPresent()) {
 			ConfigurationSection itemsSection = optionalItemsSection.get();
-			return (entity, level) -> {
-			};
+			loadItems(itemsSection);
 		} else {
-			if (override) {
-				return (entity, level) -> {
-					entity.setMetadata("custom-drops", new FixedMetadataValue(plugin, null));
-				};
-			} else {
-				return (entity, level) -> {
-				};
-			}
 		}
+		return null;
+	}
+	
+	private List<IntFunction<LootTable>> loadItems(ConfigurationSection itemsSection) throws InvalidConfigurationException {
+		Set<String> itemKeys = itemsSection.getKeys(false);
+		Map<String, IntFunction<Supplier<ItemStack>>> items = new HashMap<>();
+		for (String itemKey : itemKeys) {
+			items.put(itemKey, loadItem(ConfigurationUtil.loadConfigurationSection(itemsSection, itemKey)));
+		}
+		return null;
 	}
 
+	private IntFunction<Supplier<ItemStack>> loadItem(ConfigurationSection itemSection) throws InvalidConfigurationException {
+		Material type;
+		try {
+			type = ConfigurationUtil.loadEnumValue(itemSection, "type", Material.class);
+		} catch (NoSuchElementException exception) {
+			throw new InvalidConfigurationException(itemSection.getName() + " has no item type given");
+		}
+		short damage = (short) ConfigurationUtil.loadInteger(itemSection, "data", 0);
+		String name = ConfigurationUtil.loadString(itemSection, "name", null);
+		List<String> lore = ConfigurationUtil.loadList(itemSection, "list", Collections.emptyList()).stream()
+				.filter(line -> line instanceof String)
+				.map(line -> (String) line)
+				.collect(Collectors.toList());
+		return null;
+	}
+	
 	private ObjIntConsumer<LivingEntity> getEquippment (final ConfigurationSection variantSection, final String entityType) throws InvalidConfigurationException {
-		final ObjIntConsumer<LivingEntity> equippment;
 		if (variantSection.contains("equippment", true)) {
 			ConfigurationSection equippmentSection = variantSection.getConfigurationSection("equippment");
 			if (equippmentSection == null) {
 				throw new InvalidConfigurationException("equippment configuration of variant" + variantSection.getName() + " of entity " + entityType + " is invalid");
 			}
-			equippment = loadEquippment(equippmentSection);
+			return loadEquippment(equippmentSection);
 		} else {
-			equippment = (entity, level) -> {
+			return (entity, level) -> {
 			};
 		}
-		return equippment;
 	}
 
 	private ObjIntConsumer<LivingEntity> loadEquippment (final ConfigurationSection equippmentSection) throws InvalidConfigurationException {

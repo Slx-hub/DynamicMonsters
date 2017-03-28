@@ -15,10 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.minetropolis.monsters;
+package de.minetropolis.monsters.configuration;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -26,7 +27,6 @@ import java.util.OptionalLong;
 import org.bukkit.Color;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
@@ -50,7 +50,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadBoolean(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -61,18 +61,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static boolean loadBoolean (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isBoolean(path)) {
-				throw new InvalidConfigurationException(path + " is not a boolean");
+				throw new IllegalEntryTypeException(path + " is not a boolean");
 			}
 			return section.getBoolean(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -89,7 +88,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadColor(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -98,7 +97,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadColor(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -109,18 +108,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static Color loadColor (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isColor(path)) {
-				throw new InvalidConfigurationException(path + " is not a color");
+				throw new IllegalEntryTypeException(path + " is not a color");
 			}
 			return section.getColor(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -137,7 +135,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadConfigurationSection(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -146,31 +144,37 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadConfigurationSection(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
 
+	public static Map<String, ConfigurationSection> loadConfigurationSectionGroup (ConfigurationSection section) throws InvalidConfigurationException{
+		Map<String, ConfigurationSection> subSections = new HashMap<>();
+		for (String subSection : section.getKeys(false)) {
+			subSections.put(subSection, loadConfigurationSection(section, subSection));
+		}
+		return subSections;
+	}
+	
 	/**
 	 *
 	 * @param section
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static ConfigurationSection loadConfigurationSection (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isConfigurationSection(path)) {
-				throw new InvalidConfigurationException(path + " is not a configuration section");
+				throw new IllegalEntryTypeException(path + " is not a configuration section");
 			}
 			return section.getConfigurationSection(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
-		
 	}
 
 	/**
@@ -185,7 +189,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadDouble(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -194,7 +198,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return OptionalDouble.of(loadDouble(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return OptionalDouble.empty();
 		}
 	}
@@ -205,18 +209,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static double loadDouble (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isDouble(path)) {
-				throw new InvalidConfigurationException(path + " is not a double");
+				throw new IllegalEntryTypeException(path + " is not a double");
 			}
 			return section.getDouble(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 	}
 
@@ -232,7 +235,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadInteger(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -241,7 +244,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return OptionalInt.of(loadInteger(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return OptionalInt.empty();
 		}
 	}
@@ -252,18 +255,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static int loadInteger (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isInt(path)) {
-				throw new InvalidConfigurationException(path + " is not an integer");
+				throw new IllegalEntryTypeException(path + " is not an integer");
 			}
 			return section.getInt(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 	}
 
@@ -279,7 +281,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadItemStack(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -288,7 +290,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadItemStack(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -299,18 +301,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static ItemStack loadItemStack (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isItemStack(path)) {
-				throw new InvalidConfigurationException(path + " is not a item stack");
+				throw new IllegalEntryTypeException(path + " is not a item stack");
 			}
 			return section.getItemStack(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -327,7 +328,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadList(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -338,18 +339,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static List<?> loadList (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isList(path)) {
-				throw new InvalidConfigurationException(path + " is not a list");
+				throw new IllegalEntryTypeException(path + " is not a list");
 			}
 			return section.getList(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -366,7 +366,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadLong(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -375,7 +375,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return OptionalLong.of(loadLong(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return OptionalLong.empty();
 		}
 	}
@@ -386,18 +386,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static long loadLong (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isLong(path)) {
-				throw new InvalidConfigurationException(path + " is not a long");
+				throw new IllegalEntryTypeException(path + " is not a long");
 			}
 			return section.getLong(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -414,7 +413,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadPlayer(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -423,7 +422,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadPlayer(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -434,18 +433,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static OfflinePlayer loadPlayer (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isOfflinePlayer(path)) {
-				throw new InvalidConfigurationException(path + " is not a player");
+				throw new IllegalEntryTypeException(path + " is not a player");
 			}
 			return section.getOfflinePlayer(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 		
 	}
@@ -462,7 +460,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadString(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -471,7 +469,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadString(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -482,18 +480,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static String loadString (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isString(path)) {
-				throw new InvalidConfigurationException(path + " is not a string");
+				throw new IllegalEntryTypeException(path + " is not a string");
 			}
 			return section.getString(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 	}
 
@@ -509,7 +506,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadVector(section, path);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -518,7 +515,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadVector(section, path));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -529,18 +526,17 @@ public final class ConfigurationUtil {
 	 * @param path
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static Vector loadVector (ConfigurationSection section, String path)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (section.contains(path, true)) {
 			if (!section.isVector(path)) {
-				throw new InvalidConfigurationException(path + " is not a vector");
+				throw new IllegalEntryTypeException(path + " is not a vector");
 			}
 			return section.getVector(path);
 		} else {
-			throw new NoSuchElementException(path + " is not defined");
+			throw new MissingEntryException(path + " is not defined");
 		}
 	}
 
@@ -558,7 +554,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return loadEnumValue(section, path, enumClass);
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return def;
 		}
 	}
@@ -567,7 +563,7 @@ public final class ConfigurationUtil {
 			throws InvalidConfigurationException {
 		try {
 			return Optional.ofNullable(loadEnumValue(section, path, enumClass));
-		} catch (NoSuchElementException exception) {
+		} catch (MissingEntryException exception) {
 			return Optional.empty();
 		}
 	}
@@ -580,10 +576,9 @@ public final class ConfigurationUtil {
 	 * @param enumClass
 	 * @return
 	 * @throws InvalidConfigurationException
-	 * @throws NoSuchElementException
 	 */
 	public static <T extends Enum<T>> T loadEnumValue (ConfigurationSection section, String path, Class<T> enumClass)
-			throws InvalidConfigurationException, NoSuchElementException {
+			throws InvalidConfigurationException {
 		checkArguments(section, path);
 		if (enumClass == null) {
 			throw new IllegalArgumentException("no enum type given");
@@ -592,10 +587,10 @@ public final class ConfigurationUtil {
 			String name = loadString(section, path);
 			return Enum.valueOf(enumClass, name);
 		} catch (NullPointerException | IllegalArgumentException | InvalidConfigurationException exception) {
-			throw new InvalidConfigurationException(path + " is not an enum value of " + enumClass.getSimpleName());
+			throw new IllegalEntryTypeException(path + " is not an enum value of " + enumClass.getSimpleName());
 		}
 	}
-
+	
 	private static void checkArguments(ConfigurationSection section, String path) throws IllegalArgumentException {
 		if (section == null) {
 			throw new IllegalArgumentException("no configuration section");

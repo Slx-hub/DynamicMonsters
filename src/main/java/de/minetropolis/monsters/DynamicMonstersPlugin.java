@@ -16,18 +16,10 @@
  */
 package de.minetropolis.monsters;
 
-import java.util.HashMap;
-import java.util.Map;
+import de.minetropolis.monsters.configuration.ConfigurationParser;
 import java.util.Set;
-import java.util.function.Consumer;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -51,8 +43,7 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		ConfigurationParser parser = new ConfigurationParser(this);
 		parser.parseCurrentConfig();
 
-		final Map<EntityType, Consumer<LivingEntity>> modifications = parser.getSpawnRules();
-		getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(modifications), this);
+		getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(parser.getSpawnRules()), this);
 		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 

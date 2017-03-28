@@ -17,7 +17,6 @@
 package de.minetropolis.monsters;
 
 import java.util.function.ObjIntConsumer;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 /**
