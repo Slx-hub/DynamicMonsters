@@ -24,11 +24,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import org.bukkit.Location;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Vector;
 
 public final class ConfigurationParser {
 
@@ -86,82 +88,90 @@ public final class ConfigurationParser {
 				.orElseThrow(() -> new MissingEntryException("No active worlds defined."));
 		ConfigurationSection entitiesSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "entities")
 				.orElseThrow(() -> new MissingEntryException("No active entities defined."));
-		loadWorlds(worldsSection, "worlds");
+		loadWorlds(worldsSection);
 		loadEntities();
 	}
 	
-	private void loadWorlds (ConfigurationSection worldsSection, String position) throws InvalidConfigurationException {
+	private void loadWorlds (ConfigurationSection worldsSection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> worldSections = ConfigurationUtil.loadConfigurationSectionGroup(worldsSection);
 		if (worldSections.isEmpty()) {
-			throw new MissingEntryException("No world configuration found at " + position + ".");
+			throw new MissingEntryException("No world configuration found.");
 		}
 		for (String worldName : worldSections.keySet()) {
-			loadWorld(worldSections.get(worldName), position + " -> " + worldName);
+			loadWorld(worldSections.get(worldName));
 		}
 	}
 
-	private void loadWorld (ConfigurationSection worldSection, String position) throws InvalidConfigurationException {
+	private void loadWorld (ConfigurationSection worldSection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> hotspotSections = ConfigurationUtil.loadConfigurationSectionGroup(worldSection);
 		for (String hotspotName : hotspotSections.keySet()) {
-			loadHotspot(hotspotSections.get(hotspotName), position + " -> " + hotspotName);
+			loadHotspot(hotspotSections.get(hotspotName));
 		}
 	}
 
-	private void loadHotspot (ConfigurationSection hotspotSection, String position) throws InvalidConfigurationException {
-		loadCenter(ConfigurationUtil.loadConfigurationSection(hotspotSection, "center"), position + " -> center");
-		int baseLevel = ConfigurationUtil.loadInteger(hotspotSection, "base-level", 0); // TODO use loaded values
+	private void loadHotspot (ConfigurationSection hotspotSection) throws InvalidConfigurationException {
+		final Vector center = loadCenter(ConfigurationUtil.loadConfigurationSection(hotspotSection, "center"));
+		final int baseLevel = ConfigurationUtil.loadInteger(hotspotSection, "base-level", 0); // TODO use loaded values
 		Optional<ConfigurationSection> horizontal = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "horizontal");
 		Optional<ConfigurationSection> vertical = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "vertical");
 		if (!horizontal.isPresent() && !vertical.isPresent()) {
-			throw new MissingEntryException("No modifier section (horizontal/vertical) found at " + position + ".");
+			throw new MissingEntryException("No modifier section (horizontal/vertical) found.");
 		}
 		if (horizontal.isPresent()) {
-			loadHorizontal(horizontal.get(), position + " -> horizontal");
+			loadHorizontal(horizontal.get());
 		}
 		if (vertical.isPresent()) {
-			loadVertical(vertical.get(), position + " -> vertical");
+			loadVertical(vertical.get());
+		}
+		final LevelBorder border;
+		Optional<ConfigurationSection> bordersSection = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "borders");
+		if (bordersSection.isPresent()) {
+			border = loadBorders(bordersSection.get());
+		} else {
+			border = new LevelBorder();
 		}
 	}
 
-	private void loadCenter (ConfigurationSection centerSection, String position) throws InvalidConfigurationException {
-		double x = ConfigurationUtil.loadDouble(centerSection, "x"); // TODO use loaded values
-		double y = ConfigurationUtil.loadDouble(centerSection, "y"); // TODO use loaded values
-		double z = ConfigurationUtil.loadDouble(centerSection, "z"); // TODO use loaded values
+	private Vector loadCenter (ConfigurationSection centerSection) throws InvalidConfigurationException {
+		final double x = ConfigurationUtil.loadDouble(centerSection, "x");
+		final double y = ConfigurationUtil.loadDouble(centerSection, "y");
+		final double z = ConfigurationUtil.loadDouble(centerSection, "z");
+		return new Vector(x, y, z);
 	}
 
-	private void loadHorizontal (ConfigurationSection horizontalSection, String position) throws InvalidConfigurationException {
-		loadLevelChange(horizontalSection, position);
-		DistanceMethod method = ConfigurationUtil.loadEnumValue(horizontalSection, "distance-method", DistanceMethod.class, DistanceMethod.MINECRAFT);
+	private void loadHorizontal (ConfigurationSection horizontalSection) throws InvalidConfigurationException {
+		loadLevelChange(horizontalSection);
+		final DistanceMethod method = ConfigurationUtil.loadEnumValue(horizontalSection, "distance-method", DistanceMethod.class, DistanceMethod.MINECRAFT);
 		
 	}
 
-	private void loadVertical (ConfigurationSection verticalSection, String position) throws InvalidConfigurationException {
-		loadLevelChange(verticalSection, position);
+	private void loadVertical (ConfigurationSection verticalSection) throws InvalidConfigurationException {
+		loadLevelChange(verticalSection);
 		Optional<ConfigurationSection> increaseSection = ConfigurationUtil.loadOptionalConfigurationSection(verticalSection, "increase");
 		if (increaseSection.isPresent()) {
-			loadIncrease(increaseSection.get(), position + " -> increase");
+			loadIncrease(increaseSection.get());
 		}
 	}
 	
-	private void loadIncrease (ConfigurationSection increaseSection, String position) throws InvalidConfigurationException {
-		boolean upwards = ConfigurationUtil.loadBoolean(increaseSection, "upwards", true);
-		boolean downwards = ConfigurationUtil.loadBoolean(increaseSection, "downwards", true);
+	private void loadIncrease (ConfigurationSection increaseSection) throws InvalidConfigurationException {
+		final boolean upwards = ConfigurationUtil.loadBoolean(increaseSection, "upwards", true); // TODO use loaded values
+		final boolean downwards = ConfigurationUtil.loadBoolean(increaseSection, "downwards", true); // TODO use loaded values
 	}
 	
-	private void loadLevelChange (ConfigurationSection changeSection, String position) throws InvalidConfigurationException {
-		int levelChange = ConfigurationUtil.loadInteger(changeSection, "level-change");
-		double distancePerChange = ConfigurationUtil.loadDouble(changeSection, "distance-per-change");
-		double distanceOffset = ConfigurationUtil.loadDouble(changeSection, "distance-offset", 0.0);
-		LevelBorder border;
+	private void loadLevelChange (ConfigurationSection changeSection) throws InvalidConfigurationException {
+		final int levelChange = ConfigurationUtil.loadInteger(changeSection, "level-change"); // TODO use loaded values
+		final double distancePerChange = ConfigurationUtil.loadDouble(changeSection, "distance-per-change"); // TODO use loaded values
+		final double distanceOffset = ConfigurationUtil.loadDouble(changeSection, "distance-offset", 0.0); // TODO use loaded values
+		final LevelBorder border; // TODO use loaded values
 		Optional<ConfigurationSection> bordersSection = ConfigurationUtil.loadOptionalConfigurationSection(changeSection, "borders");
 		if (bordersSection.isPresent()) {
-			border = loadBorders(bordersSection.get(), position + " -> borders");
+			border = loadBorders(bordersSection.get());
 		} else {
 			border = new LevelBorder();
 		}
 	}
 	
-	private LevelBorder loadBorders (ConfigurationSection bordersSection, String position) throws InvalidConfigurationException {
+	private LevelBorder loadBorders (ConfigurationSection bordersSection) throws InvalidConfigurationException {
 		return new LevelBorder(ConfigurationUtil.loadOptionalInteger(bordersSection, "min"), ConfigurationUtil.loadOptionalInteger(bordersSection, "max"));
 	}
 	
