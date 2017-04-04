@@ -81,10 +81,6 @@ public final class ConfigurationParser {
 	}
 
 	private void parseConfig () throws InvalidConfigurationException {
-		loadConfig();
-	}
-
-	private void loadConfig () throws InvalidConfigurationException {
 		ConfigurationSection worldsSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "worlds")
 				.orElseThrow(() -> new MissingEntryException("no active worlds"));
 		ConfigurationSection entitiesSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "entities")
