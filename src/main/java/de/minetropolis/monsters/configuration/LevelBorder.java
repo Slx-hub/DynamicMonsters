@@ -42,7 +42,7 @@ public class LevelBorder {
 		this(minimum, maximum, true, true);
 	}
 	
-	public LevelBorder (int minimum, int maximum, boolean hasMin, boolean hasMax) {
+	private LevelBorder (int minimum, int maximum, boolean hasMin, boolean hasMax) {
 		if (minimum > maximum) {
 			throw new IllegalArgumentException("minimum greater than maximum");
 		}
@@ -61,4 +61,20 @@ public class LevelBorder {
 		}
 		return value;
 	}
+
+    public OptionalInt getMinimum() {
+        if (this.hasMinimum) {
+            return OptionalInt.of(this.minimum);
+        } else {
+            return OptionalInt.empty();
+        }
+    }
+
+    public OptionalInt getMaximum() {
+        if (this.hasMaximum) {
+            return OptionalInt.of(this.maximum);
+        } else {
+            return OptionalInt.empty();
+        }
+    }
 }

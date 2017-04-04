@@ -4,10 +4,8 @@ worlds:
     far-increase:
       center:
         x: 123.0
-        y: 62.0
+        y: 255.0
         z: -672.0
-      # level to start with
-      base-level: 0
       horizontal:
         level-change: 1
         # add all 80 meters level-change
@@ -15,18 +13,32 @@ worlds:
         distance-offset: 40.0
         # PYTHAGORAS distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
         distance-method: PYTHAGORAS
+        borders:
+          min: 0
+          max: 100
+      vertical:
+        level-change: 1
+        distance-per-level: 8.125
+        distance-offset: 193.0
+    dungeon-hotspot:
+      center:
+        x: 376.0
+        y: 28.0
+        z: 123.0
+      base-level: 25
+      horizontal:
+        level-change: -1
+        distance-per-level: 5.0
+        distance-offset: 12.5
+        distance-method: MINECRAFT
         min-level: 0
         max-level: 100
       vertical:
-        level-change: 1
-        distance-per-level: 5
-        # being higher as center doesn't increase level
-        increase:
-          upwards: false
-          downwards: true
-    dungeon-hotspot:
-      center:
-        x: 0
+        level-change: -1
+        distance-per-level: 5.0
+        distance-offset: 12.5
+      borders:
+        min: 0
 entities:
   ZOMBIE:
     default:
