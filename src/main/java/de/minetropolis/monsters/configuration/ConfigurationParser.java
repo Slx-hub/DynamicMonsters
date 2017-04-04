@@ -19,12 +19,13 @@ package de.minetropolis.monsters.configuration;
 import de.minetropolis.monsters.DistanceMethod;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.bukkit.Location;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
@@ -85,51 +86,58 @@ public final class ConfigurationParser {
 
 	private void loadConfig () throws InvalidConfigurationException {
 		ConfigurationSection worldsSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "worlds")
-				.orElseThrow(() -> new MissingEntryException("No active worlds defined."));
+				.orElseThrow(() -> new MissingEntryException("no active worlds"));
 		ConfigurationSection entitiesSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "entities")
-				.orElseThrow(() -> new MissingEntryException("No active entities defined."));
-		loadWorlds(worldsSection);
-		loadEntities();
+				.orElseThrow(() -> new MissingEntryException("no active entities"));
+		Map<String, Set<Hotspot>> worldsConfiguration = loadWorlds(worldsSection); // TODO use loaded values
+		loadEntities(entitiesSection);
 	}
 	
-	private void loadWorlds (ConfigurationSection worldsSection) throws InvalidConfigurationException {
+	private Map<String, Set<Hotspot>> loadWorlds (ConfigurationSection worldsSection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> worldSections = ConfigurationUtil.loadConfigurationSectionGroup(worldsSection);
 		if (worldSections.isEmpty()) {
-			throw new MissingEntryException("No world configuration found.");
+			throw new MissingEntryException("no active worlds");
 		}
+        Map<String, Set<Hotspot>> worlds = new HashMap<>();
 		for (String worldName : worldSections.keySet()) {
-			loadWorld(worldSections.get(worldName));
+			worlds.put(worldName, loadWorld(worldSections.get(worldName)));
 		}
+        return worlds;
 	}
 
-	private void loadWorld (ConfigurationSection worldSection) throws InvalidConfigurationException {
+	private Set<Hotspot> loadWorld (ConfigurationSection worldSection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> hotspotSections = ConfigurationUtil.loadConfigurationSectionGroup(worldSection);
-		for (String hotspotName : hotspotSections.keySet()) {
-			loadHotspot(hotspotSections.get(hotspotName));
+		if (hotspotSections.isEmpty()) {
+			throw new MissingEntryException("missing hotspot configuration");
 		}
+        Set<Hotspot> hotspots = new HashSet<>();
+		for (String hotspotName : hotspotSections.keySet()) {
+			hotspots.add(loadHotspot(hotspotSections.get(hotspotName)));
+		}
+        return hotspots;
 	}
 
-	private void loadHotspot (ConfigurationSection hotspotSection) throws InvalidConfigurationException {
+	private Hotspot loadHotspot (ConfigurationSection hotspotSection) throws InvalidConfigurationException {
 		final Vector center = loadCenter(ConfigurationUtil.loadConfigurationSection(hotspotSection, "center"));
+        final Hotspot hotspot = new Hotspot(hotspotSection.getName(), center);
 		final int baseLevel = ConfigurationUtil.loadInteger(hotspotSection, "base-level", 0); // TODO use loaded values
+        hotspot.setBaseLevel(baseLevel);
 		Optional<ConfigurationSection> horizontal = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "horizontal");
 		Optional<ConfigurationSection> vertical = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "vertical");
 		if (!horizontal.isPresent() && !vertical.isPresent()) {
-			throw new MissingEntryException("No modifier section (horizontal/vertical) found.");
+			throw new MissingEntryException("missing level change configuration");
 		}
 		if (horizontal.isPresent()) {
-			loadHorizontal(horizontal.get());
+			hotspot.addLevelChangeStrategy(loadHorizontal(horizontal.get()));
 		}
 		if (vertical.isPresent()) {
-			loadVertical(vertical.get());
+			hotspot.addLevelChangeStrategy(loadVertical(vertical.get()));
 		}
-		final LevelBorder border;
 		Optional<ConfigurationSection> bordersSection = ConfigurationUtil.loadOptionalConfigurationSection(hotspotSection, "borders");
 		if (bordersSection.isPresent()) {
-			border = loadBorders(bordersSection.get());
-		} else {
-			border = new LevelBorder();
+			hotspot.setLevelBorder(loadBorders(bordersSection.get()));
 		}
+        return hotspot;
 	}
 
 	private Vector loadCenter (ConfigurationSection centerSection) throws InvalidConfigurationException {
@@ -139,43 +147,40 @@ public final class ConfigurationParser {
 		return new Vector(x, y, z);
 	}
 
-	private void loadHorizontal (ConfigurationSection horizontalSection) throws InvalidConfigurationException {
-		loadLevelChange(horizontalSection);
+	private LevelChangeStrategy loadHorizontal (ConfigurationSection horizontalSection) throws InvalidConfigurationException {
 		final DistanceMethod method = ConfigurationUtil.loadEnumValue(horizontalSection, "distance-method", DistanceMethod.class, DistanceMethod.MINECRAFT);
-		
+		return loadLevelChange(horizontalSection, (c, d, o ,b) -> new HorizontalLevelChangeStrategy(c, d, o, b, method));
 	}
 
-	private void loadVertical (ConfigurationSection verticalSection) throws InvalidConfigurationException {
-		loadLevelChange(verticalSection);
-		Optional<ConfigurationSection> increaseSection = ConfigurationUtil.loadOptionalConfigurationSection(verticalSection, "increase");
-		if (increaseSection.isPresent()) {
-			loadIncrease(increaseSection.get());
-		}
+	private LevelChangeStrategy loadVertical (ConfigurationSection verticalSection) throws InvalidConfigurationException {
+		return loadLevelChange(verticalSection, (c, d, o, b) -> new VerticalLevelChangeStrategy(c, d, o, b));
 	}
 	
-	private void loadIncrease (ConfigurationSection increaseSection) throws InvalidConfigurationException {
-		final boolean upwards = ConfigurationUtil.loadBoolean(increaseSection, "upwards", true); // TODO use loaded values
-		final boolean downwards = ConfigurationUtil.loadBoolean(increaseSection, "downwards", true); // TODO use loaded values
-	}
-	
-	private void loadLevelChange (ConfigurationSection changeSection) throws InvalidConfigurationException {
-		final int levelChange = ConfigurationUtil.loadInteger(changeSection, "level-change"); // TODO use loaded values
-		final double distancePerChange = ConfigurationUtil.loadDouble(changeSection, "distance-per-change"); // TODO use loaded values
-		final double distanceOffset = ConfigurationUtil.loadDouble(changeSection, "distance-offset", 0.0); // TODO use loaded values
-		final LevelBorder border; // TODO use loaded values
+	private LevelChangeStrategy loadLevelChange (ConfigurationSection changeSection, LevelChangeFactory factory) throws InvalidConfigurationException {
+		final int levelChange = ConfigurationUtil.loadInteger(changeSection, "level-change");
+		final double distancePerChange = ConfigurationUtil.loadDouble(changeSection, "distance-per-change");
+		final double distanceOffset = ConfigurationUtil.loadDouble(changeSection, "distance-offset", 0.0);
+		final LevelBorder border;
 		Optional<ConfigurationSection> bordersSection = ConfigurationUtil.loadOptionalConfigurationSection(changeSection, "borders");
 		if (bordersSection.isPresent()) {
 			border = loadBorders(bordersSection.get());
 		} else {
 			border = new LevelBorder();
 		}
+        return factory.create(levelChange, distancePerChange, distanceOffset, border);
 	}
 	
 	private LevelBorder loadBorders (ConfigurationSection bordersSection) throws InvalidConfigurationException {
 		return new LevelBorder(ConfigurationUtil.loadOptionalInteger(bordersSection, "min"), ConfigurationUtil.loadOptionalInteger(bordersSection, "max"));
 	}
 	
-	private void loadEntities () {
+	private void loadEntities (ConfigurationSection entitiesSection) {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
+    
+    private interface LevelChangeFactory {
+
+        public abstract LevelChangeStrategy create(int levelChange, double distancePerChange, double distanceOffset, LevelBorder border);
+        
+    }
 }

@@ -17,9 +17,12 @@
 
 package de.minetropolis.monsters.configuration;
 
+import org.bukkit.util.Vector;
+
 /**
  *
  */
 public interface LevelChangeStrategy {
 
+    int calculateLevelDelta(Vector center, Vector target) throws ArithmeticException;
 }

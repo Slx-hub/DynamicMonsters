@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package de.minetropolis.monsters.configuration;
 
 import java.util.Arrays;
@@ -27,61 +26,63 @@ import org.bukkit.util.Vector;
  */
 public class Hotspot {
 
-	private final String name;
-	private final Vector center;
-	private int baseLevel;
-	private LevelBorder border;
-	private final Set<LevelChangeStrategy> changeStrategies = new HashSet<>();
+    private final String name;
+    private final Vector center;
+    private int baseLevel;
+    private LevelBorder border;
+    private final Set<LevelChangeStrategy> changeStrategies = new HashSet<>();
 
-	public Hotspot (String name, Vector center) {
-		this(name, center, 0, new LevelBorder());
-	}
+    public Hotspot(String name, Vector center) {
+        this(name, center, 0, new LevelBorder());
+    }
 
-	public Hotspot (String name, Vector center, LevelChangeStrategy... strategies) {
-		this(name, center, 0, new LevelBorder(), strategies);
-	}
+    public Hotspot(String name, Vector center, LevelChangeStrategy... strategies) {
+        this(name, center, 0, new LevelBorder(), strategies);
+    }
 
-	public Hotspot (String name, Vector center, int baseLevel, LevelBorder border, LevelChangeStrategy... strategies) {
-		this(name, center, baseLevel, border);
-		this.changeStrategies.addAll(Arrays.asList(strategies));
-	}
+    public Hotspot(String name, Vector center, int baseLevel, LevelBorder border, LevelChangeStrategy... strategies) {
+        this(name, center, baseLevel, border);
+        this.changeStrategies.addAll(Arrays.asList(strategies));
+    }
 
-	public Hotspot (String name, Vector center, int baseLevel, LevelBorder border) {
-		this.name = name;
-		this.center = center.clone();
-		this.baseLevel = baseLevel;
-		this.border = border;
-	}
+    public Hotspot(String name, Vector center, int baseLevel, LevelBorder border) {
+        this.name = name;
+        this.center = center.clone();
+        this.baseLevel = baseLevel;
+        this.border = border;
+    }
 
-	public String getName() {
-		return this.name;
-	}
-	
-	public Vector getCenter() {
-		return this.center.clone();
-	}
-	
-	public int getBaseLevel() {
-		return this.baseLevel;
-	}
+    public String getName() {
+        return this.name;
+    }
 
-	public void setBaseLevel(int baseLevel) {
-		this.baseLevel = baseLevel;
-	}
-	
-	public LevelBorder getLevelBorder() {
-		return this.border;
-	}
-	
-	public void setLevelBorder(LevelBorder border) {
-		this.border = border;
-	}
-	
-	public boolean addLevelChangeStrategy(LevelChangeStrategy changeStrategy) {
-		return this.changeStrategies.add(changeStrategy);
-	}
-	
-	public int calculateChange(Vector targetPosition) {
-		return 0; // TODO missing LevelChangeStrategy methods
-	}
+    public Vector getCenter() {
+        return this.center.clone();
+    }
+
+    public int getBaseLevel() {
+        return this.baseLevel;
+    }
+
+    public void setBaseLevel(int baseLevel) {
+        this.baseLevel = baseLevel;
+    }
+
+    public LevelBorder getLevelBorder() {
+        return this.border;
+    }
+
+    public void setLevelBorder(LevelBorder border) {
+        this.border = border;
+    }
+
+    public boolean addLevelChangeStrategy(LevelChangeStrategy changeStrategy) {
+        return this.changeStrategies.add(changeStrategy);
+    }
+
+    public int calculateChange(Vector targetPosition) {
+        return this.changeStrategies.stream()
+                .mapToInt(changeStrategy -> changeStrategy.calculateLevelDelta(this.center, targetPosition))
+                .sum();
+    }
 }
