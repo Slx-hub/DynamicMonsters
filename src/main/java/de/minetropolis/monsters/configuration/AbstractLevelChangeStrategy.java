@@ -18,16 +18,39 @@
 package de.minetropolis.monsters.configuration;
 
 import java.util.Objects;
+
 import org.bukkit.util.Vector;
 
-
+/**
+ * strategy to calculate level.
+ */
 public abstract class AbstractLevelChangeStrategy implements LevelChangeStrategy {
 
+    /**
+     * amount of levels added per step.
+     */
     private final int levelPerChange;
+    /**
+     * distance between steps.
+     */
     private final double distancePerChange;
+    /**
+     * offsets distance/ and thus, level calculation.
+     */
     private final double offset;
+    /**
+     * min/max level for mobs.
+     */
     private final LevelBorder border;
 
+    /**
+     * new strategy.
+     *
+     * @param levelPerChange    amount of levels added per step
+     * @param distancePerChange distance between steps
+     * @param offset            offsets distance/ and thus, level calculation
+     * @param border            min/max level for mobs
+     */
     public AbstractLevelChangeStrategy(int levelPerChange, double distancePerChange, double offset, LevelBorder border) {
         this.levelPerChange = levelPerChange;
         this.distancePerChange = distancePerChange;
@@ -42,6 +65,13 @@ public abstract class AbstractLevelChangeStrategy implements LevelChangeStrategy
         int changes = Math.toIntExact(Math.round(Math.floor(changingDistance / this.distancePerChange)));
         return this.border.fit(Math.multiplyExact(changes, this.levelPerChange));
     }
-    
+
+    /**
+     * calculates distance.
+     *
+     * @param center position of center
+     * @param target position of target
+     * @return distance
+     */
     protected abstract double calculateDistance(Vector center, Vector target);
 }

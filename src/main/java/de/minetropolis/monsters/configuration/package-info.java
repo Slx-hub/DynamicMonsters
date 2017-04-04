@@ -15,22 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.minetropolis.monsters.configuration;
-
-import org.bukkit.util.Vector;
-
 /**
- * strategy to calculate level.
+ *
  */
-public interface LevelChangeStrategy {
-
-    /**
-     * calculates level delta.
-     *
-     * @param center position of center
-     * @param target position of target
-     * @return calculated level delta
-     * @throws ArithmeticException exception
-     */
-    int calculateLevelDelta(Vector center, Vector target) throws ArithmeticException;
-}
+package de.minetropolis.monsters.configuration;
