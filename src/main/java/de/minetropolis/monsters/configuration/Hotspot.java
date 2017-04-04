@@ -81,8 +81,7 @@ public class Hotspot {
     }
 
     public int calculateChange(Vector targetPosition) {
-        return this.changeStrategies.stream()
-                .mapToInt(changeStrategy -> changeStrategy.calculateLevelDelta(this.center, targetPosition))
-                .sum();
+        return this.border.fit(this.baseLevel + this.changeStrategies.stream()
+                .mapToInt(changeStrategy -> changeStrategy.calculateLevelDelta(this.center, targetPosition)).sum());
     }
 }
