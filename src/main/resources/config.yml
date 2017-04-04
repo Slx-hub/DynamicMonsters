@@ -1,44 +1,20 @@
 worlds:
   # world name
   world:
-    far-increase:
-      center:
-        x: 123.0
-        y: 255.0
-        z: -672.0
-      horizontal:
-        level-change: 1
-        # add all 80 meters level-change
-        distance-per-level: 80.0
-        distance-offset: 40.0
-        # PYTHAGORAS distance = sqrt(x^2+y^2) ; MINECRAFT distance = max(abs(x),abs(y))
-        distance-method: PYTHAGORAS
-        borders:
-          min: 0
-          max: 100
-      vertical:
-        level-change: 1
-        distance-per-level: 8.125
-        distance-offset: 193.0
-    dungeon-hotspot:
-      center:
-        x: 376.0
-        y: 28.0
-        z: 123.0
-      base-level: 25
-      horizontal:
-        level-change: -1
-        distance-per-level: 5.0
-        distance-offset: 12.5
-        distance-method: MINECRAFT
-        min-level: 0
-        max-level: 100
-      vertical:
-        level-change: -1
-        distance-per-level: 5.0
-        distance-offset: 12.5
-      borders:
-        min: 0
+    # variables preset: "x" "y" and "z", representing the entity's location
+    # it is recommended to set common constant values outside the calculation
+    centerX: '123'
+    centerY: '62'
+    centerZ: '-672'
+    horizontalDistancePerLevel: '80'
+    offset: '40'
+    verticalDistancePerLevel: '10'
+    distance: 'sqrt((x-centerX)^2+(z-centerZ)^2)'
+    actualDistance: 'max(0,distance-offset)'
+    levelHorizontal: 'min(100,floor(actualDistance/horizontalDistancePerLevel))'
+    levelVertical: 'floor(max(0,centerY-y)/verticalDistancePerLevel)'
+    # "level" is a special value: target of calculation
+    level: 'levelHorizontal+levelVertical'
 entities:
   ZOMBIE:
     default:
