@@ -51,7 +51,7 @@ public enum DistanceMethod {
 	}
 
 	/**
-	 * Calculate the distance between two points
+	 * Calculate the distance between two points.
 	 *
 	 * @param fromX x coordinate of first point
 	 * @param fromZ z coordinate of first point

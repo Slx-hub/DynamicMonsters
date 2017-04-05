@@ -40,10 +40,10 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		this.getLogger().config("Dumping config keys:");
 		configKeys.forEach(key -> this.getLogger().config(key));
 
-		ConfigurationParser parser = new ConfigurationParser(this);
+		final ConfigurationParser parser = new ConfigurationParser(this);
 		parser.parseCurrentConfig();
 
-		getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(parser.getSpawnRules()), this);
+		//getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(parser.getSpawnRules()), this);
 		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 

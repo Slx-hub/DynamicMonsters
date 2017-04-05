@@ -16,8 +16,11 @@
  */
 package de.minetropolis.monsters.exp4j;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.function.Function;
@@ -94,6 +97,16 @@ public class Exp4jTest {
         Expression level = new ExpressionBuilder("levelHorizontal+levelVertical").variables(variables.keySet()).functions(min, max).build().setVariables(variables);
         variables.put("level", level.evaluate());
         assertEquals(14d, variables.get("level"), 0d);
+    }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testMissingToken() {
+        Expression expression = new ExpressionBuilder("floor(max(0,centerY-y)/verticalDistancePerLevel)").build();
+    }
+
+    @Test
+    public void testTooManyVariables() {
+        Expression expression = new ExpressionBuilder("815+3*9-15^2/21").variables("x", "y", "z", "a", "b", "muhaha").build();
+        assertEquals(new HashSet<>(), expression.getVariableNames());
     }
 }
