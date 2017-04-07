@@ -17,15 +17,20 @@ worlds:
     level: 'levelHorizontal+levelVertical'
 entities:
   ZOMBIE:
-    default:
-      default: true
-      name:
-        # show entities name e.g. "Zombie" over entity, death messages will still be modified
-        show-name: true
-        # show generated level
-        show-level: true
-        # override the entities default name
-        custom-name: 'Zombie'
+    Default:
+      # variation probability is 'weight / sum of all weights of this entity type'
+      weight: '1000'
+      # show entities name over entity (like player names)
+      name-visible: true
+      # change the entities name, this has effect over the shown name (see name-visible) but also the death message
+      name: $variation-$type Level $level
+      attributes:
+        GENERIC_MAX_HEALTH:
+          base: '10+floor(level/10)'
+          ADD_SCALAR: 'random > 0.8 * (random / 2)'
+        GENERIC_MOVEMENT_SPEED:
+          # base not set, using Minecraft default
+          ADD_NUMBER: '(random-0.5)*0.2'
       loot:
         # override default item drops ; default: false
         override: true
@@ -74,63 +79,3 @@ entities:
             name: 'Zombies'' Feather'
             lore:
               - 'They love them!'
-      attributes:
-        GENERIC_MAX_HEALTH:
-          base: 10.0
-          # add per-level*level to base, using operation
-          per-level: 1.0
-          # operation not set, using ADD_NUMBER
-          # max not set, max is Integer.MAX_VALUE
-        GENERIC_MOVEMENT_SPEED:
-          # base not set, using Minecraft default
-          # per-level may be omitted for setting base value for all values
-          per-level: 0.01
-          # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
-          operation: ADD_SCALAR
-          # max of per-level*level
-          max: 1.0
-        GENERIC_ATTACK_DAMAGE:
-          per-level: 0.0153
-          # possible values: ADD_NUMBER (default), ADD_SCALAR or MULTIPLY_SCALAR_1
-          operation: ADD_SCALAR
-          # max of per-level*level
-          max: 1.0
-    boss:
-      name:
-        # show-name is not set, default is true
-        # custom-name not set, using entity's name
-        # this is a boss but can we defeat it?
-        show-level: false
-        # add "Boss" before name to indicate special status
-        # no space is insertet between prefix and name, you must set it manually
-        prefix: 'Boss '
-      # probability = 0 disables natural spawn, but commands can still use this variant
-      probability: 0.001
-      equipment:
-        bobs-sword:
-          slot: HAND
-          # equip-probability not set, equip allways
-          # always drop equiped item, default is 0, meaning never
-          drop-probability: 1
-          type: IRON_SWORD
-          data: 5
-          # amount will always equal 1 so setting it is redundant
-          name: 'Bob''s Magic Sword'
-          lore:
-            - 'He fought his whole live and'
-            - 'after-live with this weapon.'
-          enchantments:
-            SHARPNESS: 1
-            LOOTING: 2
-      attributes:
-        GENERIC_MAX_HEALTH:
-          base: 100.0
-          per-level: 10.0
-        GENERIC_MOVEMENT_SPEED:
-          # bosses are slower than normal zombies
-          base: 0.2
-        GENERIC_ATTACK_DAMAGE:
-          base: 16.0
-          per-level: 0.25
-          operation: ADD_SCALAR
-          max: 35.0
