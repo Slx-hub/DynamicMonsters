@@ -16,15 +16,15 @@
  */
 package de.minetropolis.monsters.exp4j;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.function.Function;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**
@@ -49,7 +49,7 @@ public class Exp4jTest {
             }
         };
         
-        Map<String, Double> variables = new HashMap();
+        Map<String, Double> variables = new HashMap<>();
         variables.put("x", 0d);
         variables.put("y", 0d);
         variables.put("z", 0d);
