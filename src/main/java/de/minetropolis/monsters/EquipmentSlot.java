@@ -52,14 +52,14 @@ public enum EquipmentSlot {
 	;
 
 	private final BiConsumer<EntityEquipment, ItemStack> setEquipment;
-	private final BiConsumer<EntityEquipment, Float> setDropChance;
+	private final ObjFloatConsumer<EntityEquipment> setDropChance;
 	private final Function<EntityEquipment, ItemStack> getEquipment;
-	private final Function<EntityEquipment, Float> getDropChance;
+	private final ToFloatFunction<EntityEquipment> getDropChance;
 	
 	private EquipmentSlot (BiConsumer<EntityEquipment, ItemStack> setEquipment,
-						   BiConsumer<EntityEquipment, Float> setDropChance,
+						   ObjFloatConsumer<EntityEquipment> setDropChance,
 						   Function<EntityEquipment, ItemStack> getEquipment,
-						   Function<EntityEquipment, Float> getDropChance) {
+						   ToFloatFunction<EntityEquipment> getDropChance) {
 		this.setEquipment = setEquipment;
 		this.setDropChance = setDropChance;
 		this.getEquipment = getEquipment;
@@ -80,5 +80,13 @@ public enum EquipmentSlot {
 	
 	public float getDropChance(EntityEquipment equipment) {
 		return this.getDropChance.apply(equipment);
+	}
+	
+	private interface ObjFloatConsumer<T> {
+		void accept(T t, float f);
+	}
+
+	private interface ToFloatFunction<T> {
+		float apply(T t);
 	}
 }
