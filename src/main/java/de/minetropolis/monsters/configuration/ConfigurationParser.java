@@ -17,7 +17,7 @@
 package de.minetropolis.monsters.configuration;
 
 
-import de.minetropolis.monsters.math.AdditionalFunctions;
+import de.minetropolis.monsters.math.AdditionalMathOperations;
 import de.minetropolis.monsters.math.CalculationNode;
 import java.util.Collections;
 import java.util.HashMap;
@@ -113,7 +113,7 @@ public final class ConfigurationParser {
     private SortedSet<CalculationNode> loadWorld(ConfigurationSection worldSection) throws InvalidConfigurationException {
         Map<String, ConfigurationSection> hotspotSections = ConfigurationUtil.loadConfigurationSectionGroup(worldSection);
         if (hotspotSections.isEmpty()) {
-            throw new MissingEntryException("missing hotspot configuration");
+            throw new MissingEntryException("missing world configuration");
         }
         Set<String> calculationVariables = worldSection.getKeys(false);
         if (!calculationVariables.contains("level")) {
@@ -129,7 +129,7 @@ public final class ConfigurationParser {
         SortedSet<CalculationNode> calculation = new TreeSet<>();
 		for (String calculationStep : calculationVariables) {
 			Expression expression = new ExpressionBuilder(ConfigurationUtil.loadString(worldSection, calculationStep))
-                    .functions(AdditionalFunctions.getAdditionalFunctions())
+                    .functions(AdditionalMathOperations.getAdditionalFunctions())
                     .variables(variables)
                     .build();
             calculation.add(new CalculationNode(calculationStep, expression));
