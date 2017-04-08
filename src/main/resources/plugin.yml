@@ -1,4 +1,4 @@
-name: "${artifactId}"
+name: "${project.name}"
 version: ${version}
 main: ${basePackage}.${mainClass}
 

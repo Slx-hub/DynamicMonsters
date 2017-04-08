@@ -3,12 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.minetropolis</groupId>
   <artifactId>monsters</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>DynamicMonsterDifficulity</name>
+  <name>DynamicMonsters</name>
   <description>Minecraft Bukkit plugin for setting difficulity of monsters dynamically.</description>
-  <url>http://www.minetropolis.de/pandora/</url>
+  <url>https://gogs.seyfahni.de/Minetropolis/DynamicMonsters</url>
         
   <organization>
     <name>Minetropolis</name>
