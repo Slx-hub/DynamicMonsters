@@ -14,7 +14,7 @@ worlds:
     levelHorizontal: 'min(100,floor(actualDistance/horizontalDistancePerLevel))'
     levelVertical: 'floor(max(0,centerY-y)/verticalDistancePerLevel)'
     # "level" is a special value: target of calculation
-    level: 'levelHorizontal+levelVertical'
+    level: 'levelHorizontal+levelVertical+1'
 entities:
   ZOMBIE:
     Default:
@@ -23,7 +23,7 @@ entities:
       # show entities name over entity (like player names)
       name-visible: true
       # change the entities name, this has effect over the shown name (see name-visible) but also the death message
-      name: $variation-$type Level $level
+      name: '$variation-$type Level $level'
       attributes:
         GENERIC_MAX_HEALTH:
           base: '10+floor(level/10)'

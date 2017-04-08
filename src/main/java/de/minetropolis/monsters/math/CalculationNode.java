@@ -19,72 +19,63 @@ package de.minetropolis.monsters.math;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import net.objecthunter.exp4j.Expression;
 
 /**
  *
  */
-public class CalculationNode implements Comparable<CalculationNode> {
+public class CalculationNode {
 
-    private final String variableName;
-    private final Expression expression;
+	private final String variableName;
+	private final Expression expression;
 
-    public CalculationNode(String variableName, Expression expression) {
-        this.variableName = variableName;
-        this.expression = expression;
-    }
+	public CalculationNode (String variableName, Expression expression) {
+		this.variableName = Objects.requireNonNull(variableName);
+		if (variableName.isEmpty()) {
+			throw new IllegalArgumentException();
+		}
+		this.expression = Objects.requireNonNull(expression);
+	}
 
-    public void calculateAndAddVariable(Map<String, Double> variables) {
-        if (!variables.keySet().containsAll(getRequiredVariables())) {
-            throw new IllegalArgumentException("missing variables");
-        }
-        variables.put(variableName, expression.setVariables(variables).evaluate());
-    }
-    
-    public String getProvidedVariable() {
-        return variableName;
-    }
+	public void calculateAndAddVariable (Map<String, Double> variables) {
+		variables.put(variableName, calculateVariable(variables));
+	}
 
-    public Set<String> getRequiredVariables() {
-        return expression.getVariableNames();
-    }
+	public double calculateVariable (Map<String, Double> variables) {
+		if (!variables.keySet().containsAll(getRequiredVariables())) {
+			throw new IllegalArgumentException("missing variables");
+		}
+		return expression.setVariables(variables).evaluate();
+	}
 
-    @Override
-    public int compareTo(CalculationNode other) {
-        if (this.getRequiredVariables().contains(other.getProvidedVariable())) {
-            if (other.getRequiredVariables().contains(this.getProvidedVariable())) {
-                throw new IllegalArgumentException("cyclic dependency");
-            } else {
-                return -1;
-            }
-        } else {
-            if (other.getRequiredVariables().contains(this.getProvidedVariable())) {
-                return 1;
-            } else {
-                return this.getProvidedVariable().compareTo(other.getProvidedVariable());
-            }
-        }
-    }
+	public String getProvidedVariable () {
+		return variableName;
+	}
 
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 71 * hash + Objects.hashCode(this.variableName);
-        return hash;
-    }
+	public Set<String> getRequiredVariables () {
+		return expression.getVariableNames();
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CalculationNode other = (CalculationNode) obj;
-        return Objects.equals(this.variableName, other.variableName);
-    }
+	@Override
+	public int hashCode () {
+		int hash = 3;
+		hash = 71 * hash + Objects.hashCode(this.variableName);
+		return hash;
+	}
+
+	@Override
+	public boolean equals (Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final CalculationNode other = (CalculationNode) obj;
+		return Objects.equals(this.variableName, other.getProvidedVariable());
+	}
 }

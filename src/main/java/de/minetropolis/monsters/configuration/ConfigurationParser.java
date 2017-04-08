@@ -16,9 +16,11 @@
  */
 package de.minetropolis.monsters.configuration;
 
-
+import de.minetropolis.monsters.Variation;
 import de.minetropolis.monsters.math.AdditionalMathOperations;
+import de.minetropolis.monsters.math.Calculation;
 import de.minetropolis.monsters.math.CalculationNode;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,12 +29,15 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -40,110 +45,187 @@ import org.bukkit.plugin.Plugin;
  */
 public final class ConfigurationParser {
 
-    private final Plugin plugin;
-    private Configuration config;
-    private final AtomicBoolean parsed = new AtomicBoolean(false);
+	private final Lock lock = new ReentrantLock();
+	private final AtomicBoolean parsed = new AtomicBoolean(false);
 
-    /**
-     * Create a parser for the given plugin.
-     * 
-     * @param plugin plugin to parse config for
-     */
-    public ConfigurationParser(Plugin plugin) {
-        this.plugin = plugin;
-    }
+	private final Plugin plugin;
+	private Configuration config;
 
+	private Map<String, Calculation> worldsConfiguration;
+	private Map<EntityType, Set<Variation>> entitiesConfiguration;
 
-    /**
-     * Checks whether the config is parsed or not.
-     *
-     * @return returns whether the config is parsed or not
-     */
-    public boolean isParsed() {
-        return this.parsed.get();
-    }
+	/**
+	 * Create a parser for the given plugin.
+	 *
+	 * @param plugin plugin to parse config for
+	 */
+	public ConfigurationParser (Plugin plugin) {
+		this.plugin = plugin;
+	}
 
-    /**
-     * Loads and parses the current configuration.
-     */
-    public void parseCurrentConfig() {
-        this.parsed.set(false);
-        cleanUpOldParse();
-        loadConfiguration();
-        try {
-            parseConfig();
-            this.parsed.set(true);
-        } catch (InvalidConfigurationException exception) {
-            this.plugin.getLogger().log(Level.SEVERE, "Invalid configuration: " + exception.getMessage(), exception);
-            this.plugin.getLogger().log(Level.SEVERE, "Disabling plugin.");
-        }
+	/**
+	 * Checks whether the config is parsed or not.
+	 *
+	 * @return returns whether the config is parsed or not
+	 */
+	public boolean isParsed () {
+		if (lock.tryLock()) {
+			boolean isParsed;
+			try {
+				isParsed = this.parsed.get();
+			} finally {
+				lock.unlock();
+			}
+			return isParsed;
+		} else {
+			return false;
+		}
+	}
 
-    }
+	public Map<String, Calculation> getWorldsConfiguration () {
+		if (lock.tryLock()) {
+			Map<String, Calculation> configuration = null;
+			try {
+				if (this.parsed.get()) {
+					configuration = Collections.unmodifiableMap(this.worldsConfiguration);
+				}
+			} finally {
+				lock.unlock();
+			}
+			return configuration;
+		} else {
+			return null;
+		}
+	}
 
-    private void cleanUpOldParse() {
-    }
+	public Map<EntityType, Set<Variation>> getEntitiesConfiguration () {
+		if (lock.tryLock()) {
+			Map<EntityType, Set<Variation>> configuration = null;
+			try {
+				if (this.parsed.get()) {
+					configuration = Collections.unmodifiableMap(this.entitiesConfiguration);
+				}
+			} finally {
+				lock.unlock();
+			}
+			return configuration;
+		} else {
+			return null;
+		}
+	}
 
-    private void loadConfiguration() {
-        this.plugin.saveDefaultConfig();
-        this.plugin.reloadConfig();
-        this.config = this.plugin.getConfig();
-    }
+	/**
+	 * Loads and parses the current configuration.
+	 */
+	public void parseCurrentConfig () {
+		if (lock.tryLock()) {
+			try {
+				this.parsed.set(false);
+				cleanUpOldParse();
+				loadConfiguration();
+				parseConfig();
+				this.parsed.set(true);
+			} catch (InvalidConfigurationException exception) {
+				this.plugin.getLogger().log(Level.SEVERE, "Invalid configuration: {0}", exception.getMessage());
+				this.plugin.getLogger().log(Level.FINE, null, exception);
+			} finally {
+				lock.unlock();
+			}
+		} else {
+			throw new IllegalStateException("already parsing");
+		}
+	}
 
-    private void parseConfig() throws InvalidConfigurationException {
-        ConfigurationSection worldsSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "worlds")
-                .orElseThrow(() -> new MissingEntryException("no active worlds"));
-        ConfigurationSection entitiesSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "entities")
-                .orElseThrow(() -> new MissingEntryException("no active entities"));
-        Map<String, SortedSet<CalculationNode>> worldsConfiguration = loadWorlds(worldsSection); // TODO use loaded values
-        loadEntities(entitiesSection);
-    }
+	private void cleanUpOldParse () {
+		this.worldsConfiguration = null;
+		this.entitiesConfiguration = null;
+	}
 
-    private Map<String, SortedSet<CalculationNode>> loadWorlds(ConfigurationSection worldsSection) throws InvalidConfigurationException {
-        Map<String, ConfigurationSection> worldSections = ConfigurationUtil.loadConfigurationSectionGroup(worldsSection);
-        if (worldSections.isEmpty()) {
-            throw new MissingEntryException("no active worlds");
-        }
-        Map<String, SortedSet<CalculationNode>> worlds = new HashMap<>();
-        for (String worldName : worldSections.keySet()) {
-            worlds.put(worldName, loadWorld(worldSections.get(worldName)));
-        }
-        return worlds;
-    }
+	private void loadConfiguration () {
+		this.plugin.saveDefaultConfig();
+		this.plugin.reloadConfig();
+		this.config = this.plugin.getConfig();
+	}
 
-    private SortedSet<CalculationNode> loadWorld(ConfigurationSection worldSection) throws InvalidConfigurationException {
-        Map<String, ConfigurationSection> hotspotSections = ConfigurationUtil.loadConfigurationSectionGroup(worldSection);
-        if (hotspotSections.isEmpty()) {
-            throw new MissingEntryException("missing world configuration");
-        }
-        Set<String> calculationVariables = worldSection.getKeys(false);
-        if (!calculationVariables.contains("level")) {
-            throw new MissingEntryException("no final variable 'level' defined");
-        }
-        if (calculationVariables.contains("x") || calculationVariables.contains("y") || calculationVariables.contains("z")) {
-            throw new IllegalEntryTypeException("'x', 'y' and 'z' are reserved values");
-        }
-        Set<String> variables = new HashSet<>(calculationVariables);
-        variables.add("x");
-        variables.add("y");
-        variables.add("z");
-        SortedSet<CalculationNode> calculation = new TreeSet<>();
+	private void parseConfig () throws InvalidConfigurationException {
+		ConfigurationSection worldsSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "worlds")
+				.orElseThrow(() -> new MissingEntryException("no active worlds"));
+		ConfigurationSection entitiesSection = ConfigurationUtil.loadOptionalConfigurationSection(config, "entities")
+				.orElseThrow(() -> new MissingEntryException("no active entities"));
+		this.worldsConfiguration = loadWorlds(worldsSection);
+		this.entitiesConfiguration = loadEntities(entitiesSection);
+	}
+
+	private Map<String, Calculation> loadWorlds (ConfigurationSection worldsSection) throws InvalidConfigurationException {
+		Map<String, ConfigurationSection> worldSections = ConfigurationUtil.loadConfigurationSectionGroup(worldsSection);
+		if (worldSections.isEmpty()) {
+			throw new MissingEntryException("no active worlds");
+		}
+		Map<String, Calculation> worlds = new HashMap<>();
+		for (String worldName : worldSections.keySet()) {
+			worlds.put(worldName, loadWorld(worldSections.get(worldName)));
+		}
+		return worlds;
+	}
+
+	private Calculation loadWorld (ConfigurationSection worldSection) throws InvalidConfigurationException {
+		Set<String> calculationVariables = worldSection.getKeys(false);
+		if (!calculationVariables.contains("level")) {
+			throw new MissingEntryException("no final variable 'level' defined");
+		}
+		if (calculationVariables.contains("x") || calculationVariables.contains("y") || calculationVariables.contains("z")) {
+			throw new IllegalEntryTypeException("'x', 'y' and 'z' are reserved values");
+		}
+		Set<String> variables = new HashSet<>();
+		variables.add("x");
+		variables.add("y");
+		variables.add("z");
+		Calculation calculation = new Calculation(variables);
+		variables.addAll(calculationVariables);
 		for (String calculationStep : calculationVariables) {
 			Expression expression = new ExpressionBuilder(ConfigurationUtil.loadString(worldSection, calculationStep))
-                    .functions(AdditionalMathOperations.getAdditionalFunctions())
-                    .variables(variables)
-                    .build();
-            calculation.add(new CalculationNode(calculationStep, expression));
+					.functions(AdditionalMathOperations.getAdditionalFunctions())
+					.variables(variables)
+					.build();
+			calculation.addNode(new CalculationNode(calculationStep, expression));
 		}
-        return Collections.unmodifiableSortedSet(calculation);
-    }
+		return calculation;
+	}
 
-    /**
-     * TODO Not supported yet
-     * loads the entities.
-     *
-     * @param entitiesSection config-section of entity specifications
-     */
-    private void loadEntities(ConfigurationSection entitiesSection) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+	private Map<EntityType, Set<Variation>> loadEntities (ConfigurationSection entitiesSection) throws InvalidConfigurationException {
+		Map<String, ConfigurationSection> entitySections = ConfigurationUtil.loadConfigurationSectionGroup(entitiesSection);
+		if (entitySections.isEmpty()) {
+			throw new MissingEntryException("no active entities");
+		}
+		Map<EntityType, Set<Variation>> entities = new HashMap<>();
+		for (String entityType : entitySections.keySet()) {
+			entities.put(EntityType.valueOf(entityType), loadEntityVariations(entitySections.get(entityType)));
+		}
+		return entities;
+	}
+
+	private Set<Variation> loadEntityVariations (ConfigurationSection entitySection) throws InvalidConfigurationException {
+		Map<String, ConfigurationSection> variationSections = ConfigurationUtil.loadConfigurationSectionGroup(entitySection);
+		if (variationSections.isEmpty()) {
+			throw new MissingEntryException("no active entities");
+		}
+		Set<Variation> variations = new HashSet<>();
+		for (String variationName : variationSections.keySet()) {
+			variations.add(loadVariation(variationSections.get(variationName), variationName));
+		}
+		return variations;
+	}
+
+	private Variation loadVariation (ConfigurationSection variationSection, String variationName) throws InvalidConfigurationException {
+		Expression weight = createExpressionOf(ConfigurationUtil.loadString(variationSection, "weight"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
+		Variation variation = new Variation(variationName, weight);
+		variation.setNameVisible(ConfigurationUtil.loadBoolean(variationSection, "name-visible", false));
+		variation.setNamePattern(ConfigurationUtil.loadString(variationSection, "name", null));
+		return variation;
+	}
+
+	private Expression createExpressionOf (String expression, Set<String> variables) {
+		return new ExpressionBuilder(expression).operator(AdditionalMathOperations.getAdditionalOperator())
+				.functions(AdditionalMathOperations.getAdditionalFunctions()).variables(variables).build();
+	}
 }

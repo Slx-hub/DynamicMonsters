@@ -37,23 +37,23 @@ public class InvalidConfigurationException extends Exception {
 	public InvalidConfigurationException (String message) {
 		super(message);
 	}
-	
+
 	/**
 	 * Constructs an instance of <code>InvalidConfigurationException</code> with the specified cause.
 	 *
 	 * @param cause the cause
 	 */
-    public InvalidConfigurationException (Throwable cause) {
-        super(cause);
-    }
+	public InvalidConfigurationException (Throwable cause) {
+		super(cause);
+	}
 
 	/**
 	 * Constructs an instance of <code>InvalidConfigurationException</code> with the specified detail message and cause.
 	 *
 	 * @param message the detail message
-	 * @param cause the cause
+	 * @param cause   the cause
 	 */
-    public InvalidConfigurationException (String message, Throwable cause) {
-        super(message, cause);
-    }
+	public InvalidConfigurationException (String message, Throwable cause) {
+		super(message, cause);
+	}
 }

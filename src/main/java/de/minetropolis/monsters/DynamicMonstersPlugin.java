@@ -18,6 +18,7 @@ package de.minetropolis.monsters;
 
 import de.minetropolis.monsters.configuration.ConfigurationParser;
 import java.util.Set;
+import java.util.logging.Level;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,7 +44,17 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		final ConfigurationParser parser = new ConfigurationParser(this);
 		parser.parseCurrentConfig();
 
-		//getServer().getPluginManager().registerEvents(new MonsterSpawnEventListener(parser.getSpawnRules()), this);
+		if (!parser.isParsed()) {
+			getLogger().log(Level.SEVERE, "Disabling plugin.");
+			setEnabled(false);
+			return;
+		}
+
+		final MonsterSpawnEventListener listener = new MonsterSpawnEventListener();
+		listener.setWorldsConfiguration(parser.getWorldsConfiguration());
+		listener.setEntitiesConfiguration(parser.getEntitiesConfiguration());
+
+		getServer().getPluginManager().registerEvents(listener, this);
 		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 

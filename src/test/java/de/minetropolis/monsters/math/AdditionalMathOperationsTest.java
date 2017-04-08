@@ -27,46 +27,46 @@ import static org.junit.Assert.*;
  * @author niklas
  */
 public class AdditionalMathOperationsTest {
-	
+
 	public AdditionalMathOperationsTest () {
 	}
 
 	@Test
 	public void testMinFunction () {
-        Expression expression = new ExpressionBuilder("min(-134,843)").functions(AdditionalMathOperations.MIN).build();
-        assertEquals(-134d, expression.evaluate(), 0d);
+		Expression expression = new ExpressionBuilder("min(-134,843)").functions(AdditionalMathOperations.MIN).build();
+		assertEquals(-134d, expression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testMaxFunction () {
-        Expression expression = new ExpressionBuilder("max(-134,843)").functions(AdditionalMathOperations.MAX).build();
-        assertEquals(843d, expression.evaluate(), 0d);
+		Expression expression = new ExpressionBuilder("max(-134,843)").functions(AdditionalMathOperations.MAX).build();
+		assertEquals(843d, expression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testRandomIntFunction () {
-        Expression expression = new ExpressionBuilder("randomInt(5)").functions(AdditionalMathOperations.RANDOM_INT).build();
-		for (int count = 0 ; count < 1000 ; count ++) {
+		Expression expression = new ExpressionBuilder("randomInt(5)").functions(AdditionalMathOperations.RANDOM_INT).build();
+		for (int count = 0; count < 1000; count++) {
 			double result = expression.evaluate();
 			assertTrue(Math.round(result) == result);
 			assertTrue(result >= 0d);
 			assertTrue(result <= 4d);
 		}
 	}
-	
+
 	@Test
 	public void testRandomFuncton () {
-        Expression expression = new ExpressionBuilder("random").functions(AdditionalMathOperations.RANDOM).build();
-		for (int count = 0 ; count < 1000 ; count ++) {
+		Expression expression = new ExpressionBuilder("random").functions(AdditionalMathOperations.RANDOM).build();
+		for (int count = 0; count < 1000; count++) {
 			double result = expression.evaluate();
 			assertTrue(result >= 0d);
 			assertTrue(result <= 1d);
 		}
 	}
-	
+
 	@Test
 	public void testRandomFunctonResultChanges () {
-        Expression expression = new ExpressionBuilder("random").functions(AdditionalMathOperations.RANDOM).build();
+		Expression expression = new ExpressionBuilder("random").functions(AdditionalMathOperations.RANDOM).build();
 		double result = expression.evaluate();
 		int count = 0;
 		while (result == expression.evaluate()) {
@@ -76,53 +76,77 @@ public class AdditionalMathOperationsTest {
 			count++;
 		}
 	}
-	
+
 	@Test
 	public void testGreaterThanOperator () {
-        Expression trueExpression = new ExpressionBuilder("2 > 1").operator(AdditionalMathOperations.GREATER_THAN).build();
+		Expression trueExpression = new ExpressionBuilder("2 > 1").operator(AdditionalMathOperations.GREATER_THAN).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("1 > 1").operator(AdditionalMathOperations.GREATER_THAN).build();
+		Expression falseExpression = new ExpressionBuilder("1 > 1").operator(AdditionalMathOperations.GREATER_THAN).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testGreaterThanOrEqualOperator () {
-        Expression trueExpression = new ExpressionBuilder("1 >= 1").operator(AdditionalMathOperations.GREATER_THAN_OR_EQUAL).build();
+		Expression trueExpression = new ExpressionBuilder("1 >= 1").operator(AdditionalMathOperations.GREATER_THAN_OR_EQUAL).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("1 >= 2").operator(AdditionalMathOperations.GREATER_THAN_OR_EQUAL).build();
+		Expression falseExpression = new ExpressionBuilder("1 >= 2").operator(AdditionalMathOperations.GREATER_THAN_OR_EQUAL).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testSmallerThanOperator () {
-        Expression trueExpression = new ExpressionBuilder("1 < 2").operator(AdditionalMathOperations.SMALLER_THAN).build();
+		Expression trueExpression = new ExpressionBuilder("1 < 2").operator(AdditionalMathOperations.SMALLER_THAN).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("1 < 1").operator(AdditionalMathOperations.SMALLER_THAN).build();
+		Expression falseExpression = new ExpressionBuilder("1 < 1").operator(AdditionalMathOperations.SMALLER_THAN).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testSmallerThanOrEqualOperator () {
-        Expression trueExpression = new ExpressionBuilder("1 <= 1").operator(AdditionalMathOperations.SMALLER_THAN_OR_EQUAL).build();
+		Expression trueExpression = new ExpressionBuilder("1 <= 1").operator(AdditionalMathOperations.SMALLER_THAN_OR_EQUAL).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("2 <= 1").operator(AdditionalMathOperations.SMALLER_THAN_OR_EQUAL).build();
+		Expression falseExpression = new ExpressionBuilder("2 <= 1").operator(AdditionalMathOperations.SMALLER_THAN_OR_EQUAL).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testEqualsOperator () {
-        Expression trueExpression = new ExpressionBuilder("1 == 1").operator(AdditionalMathOperations.EQUALS).build();
+		Expression trueExpression = new ExpressionBuilder("1 == 1").operator(AdditionalMathOperations.EQUALS).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("1.1 == 1").operator(AdditionalMathOperations.EQUALS).build();
+		Expression falseExpression = new ExpressionBuilder("1.1 == 1").operator(AdditionalMathOperations.EQUALS).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
 	@Test
 	public void testEqualsNotOperator () {
-        Expression trueExpression = new ExpressionBuilder("1.1 != 1").operator(AdditionalMathOperations.EQUALS_NOT).build();
+		Expression trueExpression = new ExpressionBuilder("1.1 != 1").operator(AdditionalMathOperations.EQUALS_NOT).build();
 		assertEquals(1d, trueExpression.evaluate(), 0d);
-        Expression falseExpression = new ExpressionBuilder("1 != 1").operator(AdditionalMathOperations.EQUALS_NOT).build();
+		Expression falseExpression = new ExpressionBuilder("1 != 1").operator(AdditionalMathOperations.EQUALS_NOT).build();
 		assertEquals(0d, falseExpression.evaluate(), 0d);
 	}
-	
+
+	@Test
+	public void testAndOperator () {
+		Expression trueExpression = new ExpressionBuilder("1 & 1").operator(AdditionalMathOperations.AND).build();
+		assertEquals(1d, trueExpression.evaluate(), 0d);
+		Expression falseExpression = new ExpressionBuilder("0 & 1").operator(AdditionalMathOperations.AND).build();
+		assertEquals(0d, falseExpression.evaluate(), 0d);
+	}
+
+	@Test
+	public void testOrOperator () {
+		Expression trueExpression = new ExpressionBuilder("0 | 1").operator(AdditionalMathOperations.OR).build();
+		assertEquals(1d, trueExpression.evaluate(), 0d);
+		Expression falseExpression = new ExpressionBuilder("0 | 0").operator(AdditionalMathOperations.OR).build();
+		assertEquals(0d, falseExpression.evaluate(), 0d);
+	}
+
+	@Test
+	public void testNotOperator () {
+		Expression trueExpression = new ExpressionBuilder("~0").operator(AdditionalMathOperations.NOT).build();
+		assertEquals(1d, trueExpression.evaluate(), 0d);
+		Expression falseExpression = new ExpressionBuilder("~1").operator(AdditionalMathOperations.NOT).build();
+		assertEquals(0d, falseExpression.evaluate(), 0d);
+	}
+
 }

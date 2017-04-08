@@ -16,9 +16,10 @@
  */
 package de.minetropolis.monsters;
 
+import de.minetropolis.monsters.math.Calculation;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.Set;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -31,15 +32,23 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
  */
 public final class MonsterSpawnEventListener implements Listener {
 
-	private final Map<EntityType, Consumer<LivingEntity>> modifications;
+	private final Map<String, Calculation> worlds = new HashMap<>();
+	private final Map<EntityType, Set<Variation>> entities = new HashMap<>();
 
 	/**
 	 *
-	 * @param modifications
 	 */
-	public MonsterSpawnEventListener (final Map<EntityType, Consumer<LivingEntity>> modifications) {
-		this.modifications = new HashMap<>(modifications);
-		this.modifications.forEach((type, mod) -> this.modifications.remove(type, null));
+	public MonsterSpawnEventListener () {
+	}
+
+	public void setWorldsConfiguration (Map<String, Calculation> worldsConfiguration) {
+		this.worlds.clear();
+		this.worlds.putAll(worldsConfiguration);
+	}
+
+	public void setEntitiesConfiguration (Map<EntityType, Set<Variation>> entitiesConfiguration) {
+		this.entities.clear();
+		this.entities.putAll(entitiesConfiguration);
 	}
 
 	/**
@@ -48,9 +57,20 @@ public final class MonsterSpawnEventListener implements Listener {
 	 */
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onMonsterSpawn (final CreatureSpawnEvent spanwEvent) {
-		final EntityType type = spanwEvent.getEntityType();
-		if (this.modifications.containsKey(type) && this.modifications.get(type) != null) {
-			this.modifications.get(type).accept(spanwEvent.getEntity());
+		LivingEntity entity = spanwEvent.getEntity();
+		String world = entity.getWorld().getName();
+		EntityType type = entity.getType();
+		if (!this.worlds.containsKey(world) || !this.entities.containsKey(type)) {
+			return;
 		}
+		Map<String, Double> variables = new HashMap<>();
+		variables.put("x", entity.getLocation().getX());
+		variables.put("y", entity.getLocation().getY());
+		variables.put("z", entity.getLocation().getZ());
+		worlds.get(world).executeCalculation(variables);
+
+		int level = Math.toIntExact(Math.round(variables.get("level")));
+
+		Variation.modifyEntityWeighted(entities.get(type), entity, variables, level);
 	}
 }

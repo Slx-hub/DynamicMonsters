@@ -28,91 +28,117 @@ import net.objecthunter.exp4j.operator.Operator;
  */
 public final class AdditionalMathOperations {
 
-    public static final Function MIN = new Function("min", 2) {
-        @Override
-        public double apply(double... args) {
-            return Math.min(args[0], args[1]);
-        }
-    };
+	public static final Function MIN = new Function("min", 2) {
+		@Override
+		public double apply (double... args) {
+			return Math.min(args[0], args[1]);
+		}
+	};
 
-    public static final Function MAX = new Function("max", 2) {
-        @Override
-        public double apply(double... args) {
-            return Math.max(args[0], args[1]);
-        }
-    };
+	public static final Function MAX = new Function("max", 2) {
+		@Override
+		public double apply (double... args) {
+			return Math.max(args[0], args[1]);
+		}
+	};
 
-    public static final Function RANDOM_INT = new Function("randomInt", 1) {
+	public static final Function RANDOM_INT = new Function("randomInt", 1) {
 		private final Random random = new Random();
-        @Override
-        public double apply(double... args) {
-            return random.nextInt(Math.toIntExact(Math.round(args[0])));
-        }
-    };
 
-    public static final Function RANDOM = new Function("random", 0) {
+		@Override
+		public double apply (double... args) {
+			return random.nextInt(Math.toIntExact(Math.round(args[0])));
+		}
+	};
+
+	public static final Function RANDOM = new Function("random", 0) {
 		private final Random random = new Random();
-        @Override
-        public double apply(double... args) {
-            return random.nextDouble();
-        }
-    };
 
-    public static final Operator GREATER_THAN = new Operator(">", 2, true, 250) {
+		@Override
+		public double apply (double... args) {
+			return random.nextDouble();
+		}
+	};
+
+	public static final Operator GREATER_THAN = new Operator(">", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return values[0] > values[1] ? 1 : 0;
 		}
 	};
 
-    public static final Operator GREATER_THAN_OR_EQUAL = new Operator(">=", 2, true, 250) {
+	public static final Operator GREATER_THAN_OR_EQUAL = new Operator(">=", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return values[0] >= values[1] ? 1 : 0;
 		}
 	};
 
-    public static final Operator SMALLER_THAN = new Operator("<", 2, true, 250) {
+	public static final Operator SMALLER_THAN = new Operator("<", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return values[0] < values[1] ? 1 : 0;
 		}
 	};
 
-    public static final Operator SMALLER_THAN_OR_EQUAL = new Operator("<=", 2, true, 250) {
+	public static final Operator SMALLER_THAN_OR_EQUAL = new Operator("<=", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return values[0] <= values[1] ? 1 : 0;
 		}
 	};
 
-    public static final Operator EQUALS = new Operator("==", 2, true, 250) {
+	public static final Operator EQUALS = new Operator("==", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return Math.abs(values[0] - values[1]) <= 1e-9 ? 1 : 0;
 		}
 	};
 
-    public static final Operator EQUALS_NOT = new Operator("!=", 2, true, 250) {
+	public static final Operator EQUALS_NOT = new Operator("!=", 2, true, 250) {
 		@Override
 		public double apply (double... values) {
 			return Math.abs(values[0] - values[1]) > 1e-9 ? 1 : 0;
 		}
 	};
 
-    private static final List<Function> FUNCTIONS = Collections.unmodifiableList(Arrays.asList(MIN, MAX, RANDOM_INT));
-    private static final List<Operator> OPERATORS = Collections.unmodifiableList(Arrays.asList(GREATER_THAN, GREATER_THAN_OR_EQUAL, SMALLER_THAN, SMALLER_THAN_OR_EQUAL, EQUALS, EQUALS_NOT));
+	public static final Operator AND = new Operator("&", 2, true, 120) {
+		@Override
+		public double apply (double... values) {
+			return values[0] >= 1 && values[1] >= 1 ? 1 : 0;
+		}
+	};
 
-    private AdditionalMathOperations() {
-        throw new UnsupportedOperationException("utility class");
-    }
-    
-    public static List<Function> getAdditionalFunctions() {
-        return FUNCTIONS;
-    }
-    
-    public static List<Operator> getAdditionalOperators() {
-        return OPERATORS;
-    }
-    
+	public static final Operator OR = new Operator("|", 2, true, 125) {
+		@Override
+		public double apply (double... values) {
+			return values[0] >= 1 || values[1] >= 1 ? 1 : 0;
+		}
+	};
+
+	public static final Operator NOT = new Operator("~", 1, true, 200) {
+		@Override
+		public double apply (double... values) {
+			return values[0] < 1 ? 1 : 0;
+		}
+	};
+
+	private static final List<Function> FUNCTIONS = Collections.unmodifiableList(
+			Arrays.asList(MIN, MAX, RANDOM_INT));
+	private static final List<Operator> OPERATORS = Collections.unmodifiableList(
+			Arrays.asList(GREATER_THAN, GREATER_THAN_OR_EQUAL, SMALLER_THAN, SMALLER_THAN_OR_EQUAL, EQUALS, EQUALS_NOT,
+						  AND, OR, NOT));
+
+	private AdditionalMathOperations () {
+		throw new UnsupportedOperationException("utility class");
+	}
+
+	public static List<Function> getAdditionalFunctions () {
+		return FUNCTIONS;
+	}
+
+	public static List<Operator> getAdditionalOperator () {
+		return OPERATORS;
+	}
+
 }
