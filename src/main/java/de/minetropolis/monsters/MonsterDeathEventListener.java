@@ -34,7 +34,7 @@ public class MonsterDeathEventListener implements Listener {
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onMonsterDeath(final EntityDeathEvent event) {
-		LivingEntity entity= event.getEntity();
+		LivingEntity entity = event.getEntity();
 		if (!entity.hasMetadata("dynamicMonstersDrops")) {
 			return;
 		}

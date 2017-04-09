@@ -55,6 +55,7 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		listener.setEntitiesConfiguration(parser.getEntitiesConfiguration());
 
 		getServer().getPluginManager().registerEvents(listener, this);
+		getServer().getPluginManager().registerEvents(new MonsterDeathEventListener(), this);
 		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
 	}
 
