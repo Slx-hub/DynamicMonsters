@@ -19,7 +19,6 @@ package de.minetropolis.monsters.math;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
 import net.objecthunter.exp4j.Expression;
 
 /**
@@ -77,5 +76,10 @@ public class CalculationNode {
 		}
 		final CalculationNode other = (CalculationNode) obj;
 		return Objects.equals(this.variableName, other.getProvidedVariable());
+	}
+
+	@Override
+	public String toString () {
+		return "CalculationNode{" + "variableName=" + variableName + ", expression=" + expression + '}';
 	}
 }

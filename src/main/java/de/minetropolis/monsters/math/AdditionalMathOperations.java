@@ -124,7 +124,7 @@ public final class AdditionalMathOperations {
 	};
 
 	private static final List<Function> FUNCTIONS = Collections.unmodifiableList(
-			Arrays.asList(MIN, MAX, RANDOM_INT));
+			Arrays.asList(MIN, MAX, RANDOM_INT, RANDOM));
 	private static final List<Operator> OPERATORS = Collections.unmodifiableList(
 			Arrays.asList(GREATER_THAN, GREATER_THAN_OR_EQUAL, SMALLER_THAN, SMALLER_THAN_OR_EQUAL, EQUALS, EQUALS_NOT,
 						  AND, OR, NOT));

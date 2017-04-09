@@ -18,6 +18,8 @@ package de.minetropolis.monsters;
 
 import de.minetropolis.monsters.math.CalculationNode;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,29 +28,38 @@ import java.util.Set;
 import net.objecthunter.exp4j.Expression;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.plugin.Plugin;
 
 /**
  *
  */
-public class Variation {
+public class EntityVariation {
 
 	private static final Random RANDOM = new Random();
 
 	private final String variationName;
+	private final Plugin plugin;
 	private CalculationNode weightCalculation;
+	private CalculationNode experienceCalculation;
+
 	private boolean nameVisible = false;
 	private String namePattern = null;
+	private final Set<DropVariation> drops = new HashSet<>();
+	private final Map<Attribute, CalculationNode> attributes = new HashMap<>();
 
-	public Variation (String variationName, Expression weight) {
+	public EntityVariation (String variationName, Expression weight, Plugin plugin) {
 		this.variationName = Objects.requireNonNull(variationName);
 		if (variationName.isEmpty()) {
 			throw new IllegalArgumentException();
 		}
 		this.weightCalculation = new CalculationNode("weight", Objects.requireNonNull(weight));
+		this.plugin = Objects.requireNonNull(plugin);
 	}
 
-	public static void modifyEntityWeighted (Set<Variation> variations, LivingEntity entity, Map<String, Double> variables, int level) {
-		List<Variation> variationsList = new ArrayList<>(variations);
+	public static void modifyEntityWeighted (Set<EntityVariation> variations, LivingEntity entity, Map<String, Double> variables, int level) {
+		List<EntityVariation> variationsList = new ArrayList<>(variations);
 		List<Integer> weightList = new ArrayList<>();
 		int totalWeight = 0;
 		for (int index = 0; index < variationsList.size(); index++) {
@@ -74,20 +85,24 @@ public class Variation {
 		return this.weightCalculation.calculateVariable(variables);
 	}
 
-	public void addAttribute (Attribute attribute) {
-		throw new UnsupportedOperationException();
+	public void addAttribute (Attribute attribute, Expression attributeValue) {
+		this.attributes.put(attribute, new CalculationNode(attribute.toString() + "_VALUE", attributeValue));
 	}
 
 	public void addEquipment () {
 		throw new UnsupportedOperationException();
 	}
 
-	public void addDrop () {
-		throw new UnsupportedOperationException();
+	public void addDrop (DropVariation drop) {
+		this.drops.add(drop);
 	}
 
 	public void setWeight (Expression weight) {
 		this.weightCalculation = new CalculationNode("weight", Objects.requireNonNull(weight));
+	}
+
+	public void setExpDrop (Expression exp) {
+		this.experienceCalculation = new CalculationNode("experience", Objects.requireNonNull(exp));
 	}
 
 	public void setNamePattern (String pattern) {
@@ -103,12 +118,18 @@ public class Variation {
 			entity.setCustomName(generateNameFromPattern(entity, level));
 		}
 		entity.setCustomNameVisible(this.nameVisible);
+		
+		EntityEquipment equipment = entity.getEquipment();
+		entity.setMetadata("dynamicMonstersDrops", new FixedMetadataValue(plugin, new EntityDeathData(Math.toIntExact(Math.round(experienceCalculation.calculateVariable(variables))), DropVariation.generateLoot(drops, variables))));
+		this.attributes.forEach((attribute, expression) -> entity.getAttribute(attribute).setBaseValue(expression.calculateVariable(variables)));
+		
+		entity.setHealth(entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
 	}
 
 	private String generateNameFromPattern (LivingEntity entity, int level) {
 		return this.namePattern
 				.replaceAll("(^|[^$])\\$level", "$1" + String.valueOf(level))
-				.replaceAll("(^|[^$])\\$variation", "$1" + variationName)
+				.replaceAll("(^|[^$])\\$variation", "$1" + this.variationName)
 				.replaceAll("(^|[^$])\\$type", "$1" + entity.getName());
 	}
 
@@ -130,12 +151,13 @@ public class Variation {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Variation other = (Variation) obj;
+		final EntityVariation other = (EntityVariation) obj;
 		return Objects.equals(this.variationName, other.getName());
 	}
 
 	@Override
 	public String toString () {
-		return "Variation{" + "variationName=" + this.variationName + '}';
+		return "EntityVariation{" + "variationName=" + variationName + ", weightCalculation=" + weightCalculation + ", namePattern=" + namePattern + '}';
 	}
+
 }

@@ -16,7 +16,8 @@
  */
 package de.minetropolis.monsters.configuration;
 
-import de.minetropolis.monsters.Variation;
+import de.minetropolis.monsters.DropVariation;
+import de.minetropolis.monsters.EntityVariation;
 import de.minetropolis.monsters.math.AdditionalMathOperations;
 import de.minetropolis.monsters.math.Calculation;
 import de.minetropolis.monsters.math.CalculationNode;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,6 +36,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
+import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -52,7 +56,7 @@ public final class ConfigurationParser {
 	private Configuration config;
 
 	private Map<String, Calculation> worldsConfiguration;
-	private Map<EntityType, Set<Variation>> entitiesConfiguration;
+	private Map<EntityType, Set<EntityVariation>> entitiesConfiguration;
 
 	/**
 	 * Create a parser for the given plugin.
@@ -98,9 +102,9 @@ public final class ConfigurationParser {
 		}
 	}
 
-	public Map<EntityType, Set<Variation>> getEntitiesConfiguration () {
+	public Map<EntityType, Set<EntityVariation>> getEntitiesConfiguration () {
 		if (lock.tryLock()) {
-			Map<EntityType, Set<Variation>> configuration = null;
+			Map<EntityType, Set<EntityVariation>> configuration = null;
 			try {
 				if (this.parsed.get()) {
 					configuration = Collections.unmodifiableMap(this.entitiesConfiguration);
@@ -192,36 +196,72 @@ public final class ConfigurationParser {
 		return calculation;
 	}
 
-	private Map<EntityType, Set<Variation>> loadEntities (ConfigurationSection entitiesSection) throws InvalidConfigurationException {
+	private Map<EntityType, Set<EntityVariation>> loadEntities (ConfigurationSection entitiesSection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> entitySections = ConfigurationUtil.loadConfigurationSectionGroup(entitiesSection);
 		if (entitySections.isEmpty()) {
 			throw new MissingEntryException("no active entities");
 		}
-		Map<EntityType, Set<Variation>> entities = new HashMap<>();
+		Map<EntityType, Set<EntityVariation>> entities = new HashMap<>();
 		for (String entityType : entitySections.keySet()) {
 			entities.put(EntityType.valueOf(entityType), loadEntityVariations(entitySections.get(entityType)));
 		}
 		return entities;
 	}
 
-	private Set<Variation> loadEntityVariations (ConfigurationSection entitySection) throws InvalidConfigurationException {
+	private Set<EntityVariation> loadEntityVariations (ConfigurationSection entitySection) throws InvalidConfigurationException {
 		Map<String, ConfigurationSection> variationSections = ConfigurationUtil.loadConfigurationSectionGroup(entitySection);
 		if (variationSections.isEmpty()) {
 			throw new MissingEntryException("no active entities");
 		}
-		Set<Variation> variations = new HashSet<>();
+		Set<EntityVariation> variations = new HashSet<>();
 		for (String variationName : variationSections.keySet()) {
 			variations.add(loadVariation(variationSections.get(variationName), variationName));
 		}
 		return variations;
 	}
 
-	private Variation loadVariation (ConfigurationSection variationSection, String variationName) throws InvalidConfigurationException {
+	private EntityVariation loadVariation (ConfigurationSection variationSection, String variationName) throws InvalidConfigurationException {
 		Expression weight = createExpressionOf(ConfigurationUtil.loadString(variationSection, "weight"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
-		Variation variation = new Variation(variationName, weight);
+		EntityVariation variation = new EntityVariation(variationName, weight, plugin);
 		variation.setNameVisible(ConfigurationUtil.loadBoolean(variationSection, "name-visible", false));
 		variation.setNamePattern(ConfigurationUtil.loadString(variationSection, "name", null));
+		variation.setExpDrop(createExpressionOf(ConfigurationUtil.loadString(variationSection, "experience", "-1"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
+		Optional<ConfigurationSection> drops = ConfigurationUtil.loadOptionalConfigurationSection(variationSection, "drops");
+		if (drops.isPresent()) {
+			loadDrops(drops.get(), variation);
+		}
+		Optional<ConfigurationSection> attributes = ConfigurationUtil.loadOptionalConfigurationSection(variationSection, "attributes");
+		if (attributes.isPresent()) {
+			loadAttributes(attributes.get(), variation);
+		}
 		return variation;
+	}
+
+	private void loadDrops (ConfigurationSection dropsSection, EntityVariation variation) throws InvalidConfigurationException {
+		Map<String, ConfigurationSection> dropSections = ConfigurationUtil.loadConfigurationSectionGroup(dropsSection);
+		if (dropSections.isEmpty()) {
+			return;
+		}
+		for (String dropIdentifier : dropSections.keySet()) {
+			variation.addDrop(loadDrop(dropSections.get(dropIdentifier), dropIdentifier));
+		}
+	}
+
+	private DropVariation loadDrop (ConfigurationSection dropSection, String dropIdentifier) throws InvalidConfigurationException {
+		Material type = ConfigurationUtil.loadEnumValue(dropSection, "type", Material.class);
+		Expression dropChance = createExpressionOf(ConfigurationUtil.loadString(dropSection, "drop-chance"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
+		DropVariation drop = new DropVariation(dropIdentifier, dropChance, type);
+		drop.setAmount(createExpressionOf(ConfigurationUtil.loadString(dropSection, "amount", "1"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
+		drop.setDamage(createExpressionOf(ConfigurationUtil.loadString(dropSection, "damage", "0"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
+		drop.setData(createExpressionOf(ConfigurationUtil.loadString(dropSection, "data", "0"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
+		return drop;
+	}
+
+	private void loadAttributes (ConfigurationSection attributesSection, EntityVariation variation) throws InvalidConfigurationException {
+		Set<String> attributes = attributesSection.getKeys(false);
+		for (String attribute : attributes) {
+			variation.addAttribute(Attribute.valueOf(attribute), createExpressionOf(ConfigurationUtil.loadString(attributesSection, attribute), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
+		}
 	}
 
 	private Expression createExpressionOf (String expression, Set<String> variables) {

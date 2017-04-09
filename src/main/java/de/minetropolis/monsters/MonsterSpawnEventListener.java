@@ -33,7 +33,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 public final class MonsterSpawnEventListener implements Listener {
 
 	private final Map<String, Calculation> worlds = new HashMap<>();
-	private final Map<EntityType, Set<Variation>> entities = new HashMap<>();
+	private final Map<EntityType, Set<EntityVariation>> entities = new HashMap<>();
 
 	/**
 	 *
@@ -46,7 +46,7 @@ public final class MonsterSpawnEventListener implements Listener {
 		this.worlds.putAll(worldsConfiguration);
 	}
 
-	public void setEntitiesConfiguration (Map<EntityType, Set<Variation>> entitiesConfiguration) {
+	public void setEntitiesConfiguration (Map<EntityType, Set<EntityVariation>> entitiesConfiguration) {
 		this.entities.clear();
 		this.entities.putAll(entitiesConfiguration);
 	}
@@ -71,6 +71,6 @@ public final class MonsterSpawnEventListener implements Listener {
 
 		int level = Math.toIntExact(Math.round(variables.get("level")));
 
-		Variation.modifyEntityWeighted(entities.get(type), entity, variables, level);
+		EntityVariation.modifyEntityWeighted(entities.get(type), entity, variables, level);
 	}
 }
