@@ -226,7 +226,7 @@ public final class ConfigurationParser {
 		variation.setNameVisible(ConfigurationUtil.loadBoolean(variationSection, "name-visible", false));
 		variation.setNamePattern(ConfigurationUtil.loadString(variationSection, "name", null));
 		variation.setExpDrop(createExpressionOf(ConfigurationUtil.loadString(variationSection, "experience", "-1"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
-		Optional<ConfigurationSection> drops = ConfigurationUtil.loadOptionalConfigurationSection(variationSection, "drops");
+		Optional<ConfigurationSection> drops = ConfigurationUtil.loadOptionalConfigurationSection(variationSection, "loot");
 		if (drops.isPresent()) {
 			loadDrops(drops.get(), variation);
 		}
