@@ -25,61 +25,11 @@ entities:
       # change the entities name, this has effect over the shown name (see name-visible) but also the death message
       name: '$variation-$type Level $level'
       attributes:
-        GENERIC_MAX_HEALTH:
-          base: '10+floor(level/10)'
-          ADD_SCALAR: 'random > 0.8 * (random / 2)'
-        GENERIC_MOVEMENT_SPEED:
-          # base not set, using Minecraft default
-          ADD_NUMBER: '(random-0.5)*0.2'
-      equipment:
-        HELMET:
-          empty-weight: '20'
-          
+        GENERIC_MAX_HEALTH: '10+floor(level/10) * (1 + ((random > 0.8) * (random / 2)))'
       loot:
-        # override default item drops ; default: false
-        override: true
-        items:
-          rotten-flesh:
-            # probability not set, item will drop every time
-            type: ROTTEN_FLESH
-            data: 0
-            amount:
-              min: 0
-              # min won't get bigger than max
-              add-min-per-level: 0.025
-              max: 2
-              # if min reaches max they won't swap
-              add-max-per-level: 0.02
-              # at level 400 there will always drop 10, increasing 0.02 per level, minimum is bigger than maximum
-              # max items = max + level * add-max-per-level
-              # min items = minimum(min + level * add-min-per-level, max items)
-              # but don't use this setup, it leads to unexpected behaviour
-            # name not set, using Minecraft default
-            # lore not set, setting no lore
-          zombie-feather:
-            # starting level is 31, not 1
-            since-level: 31
-            probability:
-              # base = 0 would lead to no drops, but change-to in-levels still applies
-              base: 0.01
-              # in-levels is change-to linear reached
-              change-to: 0.02
-              # probability of level x: 0.01 + (0.02 - 0.01) * min(50, x)
-              in-levels: 50
-              # if continue == true: probability of level x: min(1, 0.01 + (0.02 - 0.01) * x)
-              continue: false
-              # combined with starting level:
-              # level 1-30 -> no feathers
-              # level 31+  -> 1% chance for feather drop, increasing
-              # level 81+  -> first level with 2% chance for feather drop, not increasing
-            # good old times
-            type: FEATHER
-            data: 0
-            # instead of setting amount: min: 1 max: 1
-            amount:
-              # amount doesn't increase per level
-              min: 1
-              max: 2
-            name: 'Zombies'' Feather'
-            lore:
-              - 'They love them!'
+        rotten-flesh:
+          type: ROTTEN_FLESH
+          amount: '1 + randomInt(3)'
+        zombie-feather:
+          drop-chance: '(level > 30) * 0.01 + 0.01 * min(50, level)'
+          type: FEATHER

@@ -249,7 +249,7 @@ public final class ConfigurationParser {
 
 	private DropVariation loadDrop (ConfigurationSection dropSection, String dropIdentifier) throws InvalidConfigurationException {
 		Material type = ConfigurationUtil.loadEnumValue(dropSection, "type", Material.class);
-		Expression dropChance = createExpressionOf(ConfigurationUtil.loadString(dropSection, "drop-chance"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
+		Expression dropChance = createExpressionOf(ConfigurationUtil.loadString(dropSection, "drop-chance", "1"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
 		DropVariation drop = new DropVariation(dropIdentifier, dropChance, type);
 		drop.setAmount(createExpressionOf(ConfigurationUtil.loadString(dropSection, "amount", "1"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
 		drop.setDamage(createExpressionOf(ConfigurationUtil.loadString(dropSection, "damage", "0"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
