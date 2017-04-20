@@ -42,6 +42,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -251,6 +252,8 @@ public final class ConfigurationParser {
 		Material type = ConfigurationUtil.loadEnumValue(dropSection, "type", Material.class);
 		Expression dropChance = createExpressionOf(ConfigurationUtil.loadString(dropSection, "drop-chance", "1"), new HashSet<>(Arrays.asList("level", "x", "y", "z")));
 		DropVariation drop = new DropVariation(dropIdentifier, dropChance, type);
+        drop.setName(ConfigurationUtil.loadString(dropSection, "item-name", null));
+        drop.setLore(ConfigurationUtil.loadString(dropSection, "item-lore", null));
 		drop.setAmount(createExpressionOf(ConfigurationUtil.loadString(dropSection, "amount", "1"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
 		drop.setDamage(createExpressionOf(ConfigurationUtil.loadString(dropSection, "damage", "0"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));
 		drop.setData(createExpressionOf(ConfigurationUtil.loadString(dropSection, "data", "0"), new HashSet<>(Arrays.asList("level", "x", "y", "z"))));

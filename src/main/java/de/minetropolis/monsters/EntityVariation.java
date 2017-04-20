@@ -59,6 +59,9 @@ public class EntityVariation {
 	}
 
 	public static void modifyEntityWeighted (Set<EntityVariation> variations, LivingEntity entity, Map<String, Double> variables, int level) {
+		if (entity.getScoreboardTags().contains("Custom"))
+			return;
+
 		List<EntityVariation> variationsList = new ArrayList<>(variations);
 		List<Integer> weightList = new ArrayList<>();
 		int totalWeight = 0;
