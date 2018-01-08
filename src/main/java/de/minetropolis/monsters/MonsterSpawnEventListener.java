@@ -53,11 +53,11 @@ public final class MonsterSpawnEventListener implements Listener {
 
 	/**
 	 *
-	 * @param spanwEvent
+	 * @param spawnEvent
 	 */
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-	public void onMonsterSpawn (final CreatureSpawnEvent spanwEvent) {
-		LivingEntity entity = spanwEvent.getEntity();
+	public void onMonsterSpawn (final CreatureSpawnEvent spawnEvent) {
+		LivingEntity entity = spawnEvent.getEntity();
 		String world = entity.getWorld().getName();
 		EntityType type = entity.getType();
 		if (!this.worlds.containsKey(world) || !this.entities.containsKey(type)) {
