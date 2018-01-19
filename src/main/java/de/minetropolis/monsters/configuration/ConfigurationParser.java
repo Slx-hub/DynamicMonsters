@@ -126,7 +126,7 @@ public final class ConfigurationParser {
 		if (lock.tryLock()) {
 			try {
 				this.parsed.set(false);
-				cleanUpOldParse();
+				//cleanUpOldParse();
 				loadConfiguration();
 				parseConfig();
 				this.parsed.set(true);

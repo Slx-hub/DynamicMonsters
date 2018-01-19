@@ -7,8 +7,8 @@ author: 'seyfahni'
 website: "${project.url}"
 
 commands:
-  dynamicmonster:
-    description: 'DynamicMonsterDifficulity command.'
+  dynamicMonstersReloadConfig:
+    description: 'Reloads the config'
     usage: /<command>
-    permission: dmd.command
-    aliases: [dmd, dynamicmonsterdifficulity]
+    permission: dmreload.command
+    aliases: [dmreload, dmrelaodconfig]

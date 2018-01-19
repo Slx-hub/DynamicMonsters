@@ -27,6 +27,9 @@ import org.bukkit.plugin.java.JavaPlugin;
  *
  */
 public final class DynamicMonstersPlugin extends JavaPlugin {
+	
+	final ConfigurationParser parser = new ConfigurationParser(this);
+	final MonsterSpawnEventListener listener = new MonsterSpawnEventListener();
 
 	/**
 	 *
@@ -41,7 +44,6 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 		this.getLogger().config("Dumping config keys:");
 		configKeys.forEach(key -> this.getLogger().config(key));
 
-		final ConfigurationParser parser = new ConfigurationParser(this);
 		parser.parseCurrentConfig();
 
 		if (!parser.isParsed()) {
@@ -50,14 +52,22 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 			return;
 		}
 
-		final MonsterSpawnEventListener listener = new MonsterSpawnEventListener();
-		listener.setWorldsConfiguration(parser.getWorldsConfiguration());
-		listener.setEntitiesConfiguration(parser.getEntitiesConfiguration());
-
 		getServer().getPluginManager().registerEvents(listener, this);
 		getServer().getPluginManager().registerEvents(new MonsterDeathEventListener(), this);
-		getCommand("dynamicmonster").setExecutor(this::dynamicMonsterCommand);
+		getCommand("dynamicMonstersReloadConfig").setExecutor(this::dynamicMonsterCommand);
 	}
+	
+	private boolean parseConfig() {
+		parser.parseCurrentConfig();
+		
+		if (parser.isParsed()) {
+			listener.setWorldsConfiguration(parser.getWorldsConfiguration());
+			listener.setEntitiesConfiguration(parser.getEntitiesConfiguration());
+		}
+
+		return parser.isParsed();
+	}
+	
 
 	/**
 	 *
@@ -69,6 +79,11 @@ public final class DynamicMonstersPlugin extends JavaPlugin {
 	 */
 	public boolean dynamicMonsterCommand (final CommandSender sender, final Command command,
 										  final String label, final String[] args) {
+		if (parseConfig()) {
+			sender.sendMessage("Reload successful.");
+		} else {
+			sender.sendMessage("Reload failed! See log for details.");
+		}
 		return true;
 	}
 

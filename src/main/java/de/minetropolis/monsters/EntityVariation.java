@@ -123,6 +123,7 @@ public class EntityVariation {
 		entity.setCustomNameVisible(this.nameVisible);
 		
 		EntityEquipment equipment = entity.getEquipment();
+		
 		entity.setMetadata("dynamicMonstersDrops", new FixedMetadataValue(plugin, new EntityDeathData(Math.toIntExact(Math.round(experienceCalculation.calculateVariable(variables))), DropVariation.generateLoot(drops, variables))));
 		this.attributes.forEach((attribute, expression) -> entity.getAttribute(attribute).setBaseValue(expression.calculateVariable(variables)));
 		
